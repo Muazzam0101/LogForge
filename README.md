@@ -60,8 +60,22 @@ Every module is an independent Next.js App Router page with real URL routing and
 
 ```text
 LogForge/
-├── app/
-│   ├── layout.tsx                 # Root layout with Plus Jakarta Sans & DashboardShell
+├── backend/                       # Core ULPF Engine (Python 3.12 + FastAPI + Pydantic v2)
+│   ├── app/
+│   │   ├── main.py                # FastAPI entrypoint, lifespan, CORS, error handling
+│   │   ├── api/                   # API routes (/health, /api/v1/logs/process, /api/v1/logs/batch)
+│   │   ├── core/                  # Configuration & structured logging
+│   │   ├── normalization/         # Canonical field mapping & EventNormalizer
+│   │   ├── parsers/               # BaseParser, ParserRegistry, FormatDetector, JSON/CEF/Syslog
+│   │   ├── schemas/               # Universal Event Schema (UES), Ingestion, Response envelopes
+│   │   ├── services/              # ULPFEngine decoupled processing service
+│   │   └── utils/                 # SHA-256 cryptographic hashing & UUIDv4 generation
+│   ├── tests/                     # 40 comprehensive unit, integration & edge-case pytest tests
+│   ├── Dockerfile                 # Hardened, non-root air-gapped container image
+│   ├── requirements.txt           # Production dependencies
+│   └── requirements-dev.txt       # Dev & test dependencies
+├── app/                           # Next.js App Router (10 dedicated routes)
+│   ├── layout.tsx                 # Root layout with Outfit & JetBrains Mono fonts
 │   ├── page.tsx                   # Route: / (Dashboard)
 │   ├── ingestion/page.tsx         # Route: /ingestion
 │   ├── explorer/page.tsx          # Route: /explorer
@@ -72,17 +86,7 @@ LogForge/
 │   ├── reports/page.tsx           # Route: /reports
 │   ├── status/page.tsx            # Route: /status
 │   └── settings/page.tsx          # Route: /settings
-├── components/
-│   ├── layout/
-│   │   ├── DashboardShell.tsx     # Persistent layout shell
-│   │   ├── Sidebar.tsx            # Next.js Link navigation with pathname detection
-│   │   └── TopBar.tsx             # Global search, shortcut (Ctrl K), notifications, and profile
-│   ├── context/
-│   │   └── ModalContext.tsx       # Global modal state management
-│   ├── ui/
-│   │   └── ScrollReveal.tsx       # Native IntersectionObserver fade-in scroll reveal
-│   ├── dashboard/                 # Dashboard components (Hero, Status, Trends, Sources, etc.)
-│   └── modals/                    # Modals (UploadLogsModal, ExplorePipelineModal, AddSourceModal)
+├── components/                    # Frontend UI design system components
 └── package.json
 ```
 
@@ -90,8 +94,28 @@ LogForge/
 
 ## 🚀 Getting Started
 
+### 1. Frontend Web UI (Next.js)
 ```bash
+# In the repository root
 npm run dev
 ```
-
 Open [http://localhost:3000](http://localhost:3000) to view the application.
+
+### 2. Backend Core ULPF Engine (Python FastAPI)
+```bash
+# Setup virtual environment
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1    # On Windows PowerShell (or source venv/bin/activate on Linux)
+pip install -r requirements-dev.txt
+
+# Run full automated test suite (40 tests)
+pytest tests -v
+
+# Start the backend server
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+Interactive API documentation:
+- **Swagger UI**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- **Health Check**: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+
