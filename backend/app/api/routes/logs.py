@@ -89,8 +89,15 @@ def process_batch(
     successful = sum(1 for r in results if r.status == "success")
     failed = len(results) - successful
 
+    if successful == 0 and len(results) > 0:
+        batch_status = "failed"
+    elif failed == 0:
+        batch_status = "success"
+    else:
+        batch_status = "partial_success"
+
     return BatchProcessResponse(
-        status="success" if failed == 0 else "partial_success",
+        status=batch_status,
         total=len(results),
         successful=successful,
         failed=failed,
