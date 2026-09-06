@@ -1,11 +1,22 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+"""Log Ingestion, Normalization, Querying, and Auditing API Endpoints."""
+from datetime import datetime
+from typing import Optional
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
+from ...core.logging import logger
+from ...db.repositories.event_repository import EventRepository
 from ...schemas.event import ProcessingResult
+from ...schemas.explorer import EventDetailResponse, EventListResponse, EventSummaryItem
 from ...schemas.ingestion import BatchLogProcessRequest, LogProcessRequest
 from ...schemas.response import BatchProcessResponse, ErrorResponse
 from ...services.processing_service import ULPFEngine
-from ..dependencies import get_ulpf_engine
+from ..dependencies import get_database, get_ulpf_engine
 
-router = APIRouter(prefix="/logs", tags=["Log Ingestion & Normalization"])
+router = APIRouter(prefix="/logs", tags=["Log Ingestion, Normalization & Audit Trail"])
 
 
 @router.post(
@@ -14,26 +25,30 @@ router = APIRouter(prefix="/logs", tags=["Log Ingestion & Normalization"])
     responses={
         status.HTTP_200_OK: {
             "model": ProcessingResult,
-            "description": "[SCHEMA BLUEPRINT · 200 SUCCESS] Static OpenAPI specification for successful processing. (Live runtime result appears in the 'Server response' section above after clicking Execute).",
+            "description": "Log processed, normalized into UES, hashed, and persisted into PostgreSQL.",
         },
         status.HTTP_422_UNPROCESSABLE_ENTITY: {
             "model": ErrorResponse,
-            "description": "[SCHEMA BLUEPRINT · 422 ERROR] Static OpenAPI error specification returned when raw log format is unidentifiable or malformed.",
+            "description": "Log format unidentifiable, input malformed, or binary stream rejected.",
+        },
+        status.HTTP_503_SERVICE_UNAVAILABLE: {
+            "model": ErrorResponse,
+            "description": "Persistent database unavailable.",
         },
     },
-    summary="Process and Normalize Single Raw Log",
+    summary="Process, Normalize and Persist Single Raw Log",
     description=(
-        "**Core Ingestion Pipeline:** Ingests a raw log line, deterministically detects format, "
-        "selects plugin parser, normalizes into Universal Event Schema (UES), calculates SHA-256 hash, "
-        "and losslessly preserves all original and unmapped fields.\n\n"
-        "💡 *Note: The **'Responses'** section below provides the static API contract / schema blueprint for client developers. "
-        "Your live execution results appear dynamically in the **'Server response'** block above.*"
+        "**Core Ingestion & Persistence Pipeline:** Ingests raw log string, deterministically detects format, "
+        "normalizes into Universal Event Schema (UES), generates SHA-256 digest, losslessly stores exact raw log "
+        "and normalized attributes in PostgreSQL, and returns execution result."
     ),
 )
 def process_log(
     payload: LogProcessRequest,
     engine: ULPFEngine = Depends(get_ulpf_engine),
+    db: Session = Depends(get_database),
 ) -> ProcessingResult:
+    # 1. Deterministic ULPF Processing & Normalization
     result = engine.process_event(
         raw_log=payload.raw_log,
         source_hint=payload.source_hint,
@@ -58,6 +73,23 @@ def process_log(
             },
         )
 
+    # 2. Persistence into PostgreSQL
+    try:
+        EventRepository.create_from_processing_result(db, result)
+    except SQLAlchemyError as exc:
+        db.rollback()
+        logger.error("Failed to persist event %s: %s", result.event_id, exc.__class__.__name__)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "status": "failed",
+                "error": {
+                    "code": "DATABASE_UNAVAILABLE",
+                    "message": "Log event was processed successfully, but database persistence failed due to storage service unavailability.",
+                },
+            },
+        )
+
     return result
 
 
@@ -67,20 +99,25 @@ def process_log(
     responses={
         status.HTTP_200_OK: {
             "model": BatchProcessResponse,
-            "description": "[SCHEMA BLUEPRINT · 200 SUCCESS] Static OpenAPI specification for batch processing outcomes. (Live runtime result appears in 'Server response' above).",
+            "description": "Batch processing outcome with individual item results.",
+        },
+        status.HTTP_503_SERVICE_UNAVAILABLE: {
+            "model": ErrorResponse,
+            "description": "Persistent database unavailable.",
         },
     },
-    summary="Process and Normalize Batch of Raw Logs",
+    summary="Process, Normalize and Persist Batch of Raw Logs",
     description=(
-        "**Batch Ingestion:** Ingests an array of raw log lines (up to 500) and processes each into Universal Event Schema representation.\n\n"
-        "💡 *Note: The **'Responses'** section below provides the static API contract / schema blueprint for client developers. "
-        "Your live execution results appear dynamically in the **'Server response'** block above.*"
+        "**Batch Ingestion:** Ingests an array of raw logs (up to 500), parses each through ULPF, "
+        "persists successful events into PostgreSQL, and reports complete batch outcomes."
     ),
 )
 def process_batch(
     payload: BatchLogProcessRequest,
     engine: ULPFEngine = Depends(get_ulpf_engine),
+    db: Session = Depends(get_database),
 ) -> BatchProcessResponse:
+    # 1. Process batch through ULPF
     results = engine.process_batch(
         raw_logs=payload.raw_logs,
         source_hint=payload.source_hint,
@@ -88,6 +125,24 @@ def process_batch(
 
     successful = sum(1 for r in results if r.status == "success")
     failed = len(results) - successful
+
+    # 2. Persist successful events into PostgreSQL
+    if successful > 0:
+        try:
+            EventRepository.create_batch_from_results(db, results)
+        except SQLAlchemyError as exc:
+            db.rollback()
+            logger.error("Failed to persist batch events: %s", exc.__class__.__name__)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={
+                    "status": "failed",
+                    "error": {
+                        "code": "DATABASE_UNAVAILABLE",
+                        "message": "Batch logs were processed, but database persistence failed due to storage service unavailability.",
+                    },
+                },
+            )
 
     if successful == 0 and len(results) > 0:
         batch_status = "failed"
@@ -103,3 +158,149 @@ def process_batch(
         failed=failed,
         results=results,
     )
+
+
+@router.get(
+    "",
+    response_model=EventListResponse,
+    responses={
+        status.HTTP_200_OK: {
+            "model": EventListResponse,
+            "description": "Paginated list of stored log events matching filters.",
+        },
+        status.HTTP_503_SERVICE_UNAVAILABLE: {
+            "model": ErrorResponse,
+            "description": "Database unavailable.",
+        },
+    },
+    summary="List and Search Processed Log Events",
+    description=(
+        "**Logs Explorer API:** Queries persisted log events from PostgreSQL with pagination, "
+        "newest-first ordering, and server-side filtering on severity, format, IP addresses, action, and timestamps."
+    ),
+)
+def list_logs(
+    limit: int = Query(default=50, ge=1, le=100, description="Page size limit (1-100)"),
+    offset: int = Query(default=0, ge=0, description="Offset record index"),
+    event_id: Optional[str] = Query(default=None, description="Filter by event UUID"),
+    detected_format: Optional[str] = Query(default=None, description="Filter by detected format (json, cef, syslog)"),
+    severity: Optional[str] = Query(default=None, description="Filter by severity (critical, high, medium, low)"),
+    action: Optional[str] = Query(default=None, description="Filter by action (allow, block, deny, etc.)"),
+    source_ip: Optional[str] = Query(default=None, description="Filter by source IP address"),
+    destination_ip: Optional[str] = Query(default=None, description="Filter by destination IP address"),
+    protocol: Optional[str] = Query(default=None, description="Filter by protocol (tcp, udp, icmp, etc.)"),
+    start_time: Optional[datetime] = Query(default=None, description="ISO timestamp start range"),
+    end_time: Optional[datetime] = Query(default=None, description="ISO timestamp end range"),
+    db: Session = Depends(get_database),
+) -> EventListResponse:
+    try:
+        records, total = EventRepository.get_events(
+            db=db,
+            limit=limit,
+            offset=offset,
+            event_id=event_id,
+            detected_format=detected_format,
+            severity=severity,
+            action=action,
+            source_ip=source_ip,
+            destination_ip=destination_ip,
+            protocol=protocol,
+            start_time=start_time,
+            end_time=end_time,
+        )
+    except SQLAlchemyError as exc:
+        logger.error("Failed to query events from database: %s", exc.__class__.__name__)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "status": "failed",
+                "error": {
+                    "code": "DATABASE_UNAVAILABLE",
+                    "message": "Unable to query logs from the database store.",
+                },
+            },
+        )
+
+    summary_items = [EventSummaryItem.model_validate(r) for r in records]
+    return EventListResponse(
+        total=total,
+        limit=limit,
+        offset=offset,
+        events=summary_items,
+    )
+
+
+@router.get(
+    "/{event_id}",
+    response_model=EventDetailResponse,
+    responses={
+        status.HTTP_200_OK: {
+            "model": EventDetailResponse,
+            "description": "Complete stored event details including raw event and normalized dictionary.",
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": ErrorResponse,
+            "description": "Event ID not found in database store.",
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorResponse,
+            "description": "Invalid event ID format.",
+        },
+        status.HTTP_503_SERVICE_UNAVAILABLE: {
+            "model": ErrorResponse,
+            "description": "Database unavailable.",
+        },
+    },
+    summary="Get Detailed Stored Log Event by Event ID",
+    description=(
+        "**Event Audit Details:** Fetches the complete stored event matching the given UUID, "
+        "allowing inspection of the exact raw event, normalized schema, and cryptographic SHA-256 hash."
+    ),
+)
+def get_log_by_event_id(
+    event_id: str,
+    db: Session = Depends(get_database),
+) -> EventDetailResponse:
+    # Validate UUID syntax
+    try:
+        UUID(event_id)
+    except (ValueError, AttributeError):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "status": "failed",
+                "error": {
+                    "code": "INVALID_UUID",
+                    "message": f"'{event_id}' is not a valid UUID format.",
+                },
+            },
+        )
+
+    try:
+        record = EventRepository.get_by_event_id(db, event_id)
+    except SQLAlchemyError as exc:
+        logger.error("Failed to query event %s: %s", event_id, exc.__class__.__name__)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "status": "failed",
+                "error": {
+                    "code": "DATABASE_UNAVAILABLE",
+                    "message": "Unable to query log details from the database store.",
+                },
+            },
+        )
+
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "status": "failed",
+                "error": {
+                    "code": "EVENT_NOT_FOUND",
+                    "message": f"Event with ID '{event_id}' was not found in persistent storage.",
+                },
+            },
+        )
+
+    return EventDetailResponse.model_validate(record)

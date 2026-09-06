@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: logforge-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: logforge
+      POSTGRES_USER: logforge
+      POSTGRES_PASSWORD: logforge
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U logforge -d logforge"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - logforge-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: logforge-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://logforge:logforge@postgres:5432/logforge
+      DEBUG: "False"
+      CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000"]'
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - logforge-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: logforge-frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_ULPF_API_URL: http://127.0.0.1:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - logforge-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  logforge-network:
+    driver: bridge

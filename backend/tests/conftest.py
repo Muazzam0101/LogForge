@@ -1,13 +1,60 @@
 import pytest
+from typing import Generator
 from fastapi.testclient import TestClient
-from app.main import app
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.pool import StaticPool
+
+from app.main import app as fastapi_app
+from app.api.dependencies import get_database
+from app.db.base import Base
 from app.services.processing_service import ULPFEngine
+import app.models.event  # Register models with Base.metadata
+
+# In-memory SQLite engine for rapid, isolated, zero-external-dependency automated testing
+TEST_DATABASE_URL = "sqlite:///:memory:"
+
+test_engine = create_engine(
+    TEST_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+TestingSessionLocal = sessionmaker(
+    bind=test_engine,
+    autocommit=False,
+    autoflush=False,
+    expire_on_commit=False,
+)
+
+
+@pytest.fixture(autouse=True)
+def init_test_db():
+    """Creates all database tables before each test and drops them afterwards."""
+    Base.metadata.create_all(bind=test_engine)
+    yield
+    Base.metadata.drop_all(bind=test_engine)
 
 
 @pytest.fixture
-def test_client():
-    """FastAPI TestClient fixture."""
-    return TestClient(app)
+def db_session() -> Generator[Session, None, None]:
+    """Provides an isolated database session for repository & integration tests."""
+    session = TestingSessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+
+
+@pytest.fixture
+def test_client(db_session: Session) -> Generator[TestClient, None, None]:
+    """FastAPI TestClient with database dependency override to test in-memory DB."""
+    def override_get_database():
+        yield db_session
+
+    fastapi_app.dependency_overrides[get_database] = override_get_database
+    with TestClient(fastapi_app) as client:
+        yield client
+    fastapi_app.dependency_overrides.clear()
 
 
 @pytest.fixture

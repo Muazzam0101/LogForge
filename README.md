@@ -101,16 +101,22 @@ npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-### 2. Backend Core ULPF Engine (Python FastAPI)
+### 2. Backend Core ULPF Engine (Python FastAPI + MySQL / PostgreSQL)
 ```bash
 # Setup virtual environment
 cd backend
 python -m venv venv
 .\venv\Scripts\Activate.ps1    # On Windows PowerShell (or source venv/bin/activate on Linux)
-pip install -r requirements-dev.txt
+pip install -r requirements.txt -r requirements-dev.txt
 
-# Run full automated test suite (40 tests)
-pytest tests -v
+# Configure environment variables (MySQL 8.0 default)
+copy .env.example .env
+
+# Apply Alembic database migrations
+alembic upgrade head
+
+# Run full automated test suite (66 tests)
+pytest -v
 
 # Start the backend server
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
@@ -119,3 +125,45 @@ Interactive API documentation:
 - **Swagger UI**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 - **Health Check**: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
 
+---
+
+## 🐳 Running with Docker Compose
+
+To start the complete LogForge stack (PostgreSQL database, FastAPI backend, and Next.js frontend) with a single command:
+
+```bash
+# In the repository root
+docker-compose up --build
+```
+
+Services initialized:
+- **PostgreSQL 16**: Port `5432` with healthcheck and persistent volume `postgres_data`.
+- **LogForge Backend**: Port `8000` (auto-runs `alembic upgrade head` before booting FastAPI).
+- **LogForge Frontend**: Port `3000` (Next.js production container).
+
+To stop the stack:
+```bash
+docker-compose down
+```
+
+---
+
+## 🗄️ Database Architecture & Storage (Phase 3)
+
+LogForge leverages **PostgreSQL** with **SQLAlchemy 2.x** and **Alembic** for tamper-evident, lossless security telemetry persistence:
+
+- **100% Lossless Raw Event Storage:** The exact original string received is stored unmodified in `raw_event` text column (no trimming, mutation, or re-encoding).
+- **Separate Normalized JSONB:** The normalized canonical schema is stored in `normalized_event` (`jsonb` / `json`), and custom vendor extensions are stored in `additional_fields` (`jsonb` / `json`).
+- **Cryptographic Tamper-Evidence:** Retains the immutable SHA-256 hash computed at ingestion in `sha256_hash`.
+- **Comprehensive Indexing:** High-performance B-Tree indexes on `timestamp DESC`, `event_id`, `severity`, `log_format`, `source_ip`, `destination_ip`, `action`, and `sha256_hash`.
+- **Safe Degradation:** If PostgreSQL is unreachable, the system fails gracefully with an opaque HTTP 503 error (`DATABASE_UNAVAILABLE`), strictly concealing connection strings, passwords, and SQL dialect details.
+
+### API Endpoints Overview
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| `GET` | `/health` | Core framework health status |
+| `POST` | `/api/v1/logs/process` | Ingest single log, detect format, normalize, compute SHA-256, persist to DB |
+| `POST` | `/api/v1/logs/batch` | Ingest log batch, detect formats, normalize, compute hashes, persist batch |
+| `GET` | `/api/v1/logs` | Query stored logs (server-side pagination, filters: severity, format, IP, action, dates) |
+| `GET` | `/api/v1/logs/{event_id}` | Retrieve complete audit record by UUID for deep forensic inspection |

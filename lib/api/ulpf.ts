@@ -3,8 +3,11 @@ import {
   BatchLogProcessRequest,
   BatchProcessResponse,
   HealthResponse,
+  LogListResponse,
   LogProcessRequest,
+  LogQueryParams,
   ProcessingResult,
+  StoredEventDetail,
 } from "./types";
 
 const getApiBaseUrl = (): string => {
@@ -149,6 +152,88 @@ export const ulpfApi = {
       throw new UlpfApiError(
         "Unable to connect to LogForge Processing Engine for batch ingestion.",
         "BACKEND_UNAVAILABLE",
+        err
+      );
+    }
+  },
+
+  /**
+   * Query persisted log events with pagination and filters
+   */
+  async getLogs(params: LogQueryParams = {}): Promise<LogListResponse> {
+    const searchParams = new URLSearchParams();
+    if (params.limit !== undefined) searchParams.set("limit", params.limit.toString());
+    if (params.offset !== undefined) searchParams.set("offset", params.offset.toString());
+    if (params.event_id) searchParams.set("event_id", params.event_id);
+    if (params.detected_format) searchParams.set("detected_format", params.detected_format);
+    if (params.severity) searchParams.set("severity", params.severity);
+    if (params.action) searchParams.set("action", params.action);
+    if (params.source_ip) searchParams.set("source_ip", params.source_ip);
+    if (params.destination_ip) searchParams.set("destination_ip", params.destination_ip);
+    if (params.protocol) searchParams.set("protocol", params.protocol);
+    if (params.start_time) searchParams.set("start_time", params.start_time);
+    if (params.end_time) searchParams.set("end_time", params.end_time);
+
+    const queryStr = searchParams.toString();
+    const url = `${getApiBaseUrl()}/api/v1/logs${queryStr ? `?${queryStr}` : ""}`;
+
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        const errorObj = data.detail?.error || data.error;
+        throw new UlpfApiError(
+          errorObj?.message || `Failed to fetch logs: HTTP ${res.status}`,
+          errorObj?.code || `HTTP_${res.status}`,
+          errorObj?.details
+        );
+      }
+
+      return data as LogListResponse;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError(
+        "Unable to fetch logs from LogForge persistence store.",
+        "DATABASE_UNAVAILABLE",
+        err
+      );
+    }
+  },
+
+  /**
+   * Fetch complete stored event details by event_id UUID
+   */
+  async getLogById(eventId: string): Promise<StoredEventDetail> {
+    const url = `${getApiBaseUrl()}/api/v1/logs/${encodeURIComponent(eventId)}`;
+
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        const errorObj = data.detail?.error || data.error;
+        throw new UlpfApiError(
+          errorObj?.message || `Event not found (HTTP ${res.status})`,
+          errorObj?.code || `HTTP_${res.status}`,
+          errorObj?.details
+        );
+      }
+
+      return data as StoredEventDetail;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError(
+        `Failed to retrieve details for event '${eventId}'.`,
+        "FETCH_FAILED",
         err
       );
     }

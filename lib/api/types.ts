@@ -117,3 +117,46 @@ export interface ApiClientError {
     details?: unknown;
   };
 }
+
+export interface StoredEventSummary {
+  id: number;
+  event_id: string;
+  timestamp: string | null;
+  detected_format: string;
+  source_ip: string | null;
+  destination_ip: string | null;
+  source_port: number | null;
+  destination_port: number | null;
+  protocol: string | null;
+  action: string | null;
+  severity: string | null;
+  raw_event: string;
+  sha256_hash: string;
+  created_at: string;
+}
+
+export interface StoredEventDetail extends StoredEventSummary {
+  normalized_event: NormalizedEvent | null;
+  additional_fields: Record<string, unknown> | null;
+}
+
+export interface LogListResponse {
+  total: number;
+  limit: number;
+  offset: number;
+  events: StoredEventSummary[];
+}
+
+export interface LogQueryParams {
+  limit?: number;
+  offset?: number;
+  event_id?: string;
+  detected_format?: string;
+  severity?: string;
+  action?: string;
+  source_ip?: string;
+  destination_ip?: string;
+  protocol?: string;
+  start_time?: string;
+  end_time?: string;
+}

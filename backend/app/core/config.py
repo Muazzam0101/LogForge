@@ -13,6 +13,13 @@ class Settings(BaseSettings):
     # Ingestion Constraints
     MAX_LOG_SIZE_BYTES: int = 1_048_576  # 1MB limit for individual raw log line
     MAX_BATCH_SIZE: int = 500             # Max logs allowed per batch request
+
+    # Database Configuration (MySQL 8.0 default, with PostgreSQL/SQLite support)
+    DATABASE_URL: str = "mysql+pymysql://root:@localhost:3306/logforge"
+    DB_POOL_SIZE: int = 10
+    DB_MAX_OVERFLOW: int = 20
+    DB_POOL_TIMEOUT: int = 30
+    DB_ECHO: bool = False
     
     # CORS Configuration
     CORS_ORIGINS: List[str] = [

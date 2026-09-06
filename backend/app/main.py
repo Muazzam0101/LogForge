@@ -4,6 +4,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import SQLAlchemyError
 
 from .api.routes import health, logs
 from .core.config import settings
@@ -34,6 +35,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=r"https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -54,6 +56,24 @@ async def validation_exception_handler(
                 "code": "REQUEST_VALIDATION_ERROR",
                 "message": "Request payload validation failed",
                 "details": exc.errors(),
+            },
+        },
+    )
+
+
+@app.exception_handler(SQLAlchemyError)
+async def sqlalchemy_exception_handler(
+    request: Request, exc: SQLAlchemyError
+) -> JSONResponse:
+    """Safe database exception handler concealing internals, credentials, and SQL."""
+    logger.error("Database error on %s: %s", request.url.path, exc.__class__.__name__)
+    return JSONResponse(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={
+            "status": "failed",
+            "error": {
+                "code": "DATABASE_UNAVAILABLE",
+                "message": "The persistent database is currently unavailable. Please check database connectivity.",
             },
         },
     )
