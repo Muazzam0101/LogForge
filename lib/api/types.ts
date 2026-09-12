@@ -150,6 +150,7 @@ export interface LogListResponse {
 export interface LogQueryParams {
   limit?: number;
   offset?: number;
+  q?: string;
   event_id?: string;
   detected_format?: string;
   severity?: string;
@@ -160,3 +161,21 @@ export interface LogQueryParams {
   start_time?: string;
   end_time?: string;
 }
+
+export type LogFormatFilter = "" | "json" | "cef" | "syslog" | "unknown";
+export type LogSeverityFilter = "" | "critical" | "high" | "medium" | "low" | "info" | "informational";
+export type LogActionFilter = "" | "allow" | "block" | "deny" | "drop" | "other";
+export type LogProtocolFilter = "" | "tcp" | "udp" | "icmp" | "other";
+
+export interface LogFilterState {
+  q: string;
+  detected_format: string;
+  severity: string;
+  action: string;
+  protocol: string;
+  source_ip: string;
+  destination_ip: string;
+  start_time: string;
+  end_time: string;
+}
+

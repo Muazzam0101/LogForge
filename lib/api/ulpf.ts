@@ -164,6 +164,7 @@ export const ulpfApi = {
     const searchParams = new URLSearchParams();
     if (params.limit !== undefined) searchParams.set("limit", params.limit.toString());
     if (params.offset !== undefined) searchParams.set("offset", params.offset.toString());
+    if (params.q) searchParams.set("q", params.q);
     if (params.event_id) searchParams.set("event_id", params.event_id);
     if (params.detected_format) searchParams.set("detected_format", params.detected_format);
     if (params.severity) searchParams.set("severity", params.severity);

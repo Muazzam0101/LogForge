@@ -182,6 +182,7 @@ def process_batch(
 def list_logs(
     limit: int = Query(default=50, ge=1, le=100, description="Page size limit (1-100)"),
     offset: int = Query(default=0, ge=0, description="Offset record index"),
+    q: Optional[str] = Query(default=None, description="Free-text search query across event_id, IPs, protocol, action, format, and raw payload"),
     event_id: Optional[str] = Query(default=None, description="Filter by event UUID"),
     detected_format: Optional[str] = Query(default=None, description="Filter by detected format (json, cef, syslog)"),
     severity: Optional[str] = Query(default=None, description="Filter by severity (critical, high, medium, low)"),
@@ -198,6 +199,7 @@ def list_logs(
             db=db,
             limit=limit,
             offset=offset,
+            q=q,
             event_id=event_id,
             detected_format=detected_format,
             severity=severity,

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { ArrowRight, Terminal } from "lucide-react";
 
 export function RecentEvents() {
@@ -27,10 +28,13 @@ export function RecentEvents() {
           </p>
         </div>
 
-        <button className="text-xs font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-1 group/btn transition-colors">
+        <Link
+          href="/explorer"
+          className="text-xs font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-1 group/btn transition-colors cursor-pointer"
+        >
           <span>View All</span>
           <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform duration-200" />
-        </button>
+        </Link>
       </div>
 
       {/* Table Container */}

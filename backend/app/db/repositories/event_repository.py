@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from ...models.event import EventModel
@@ -119,6 +119,7 @@ class EventRepository:
         db: Session,
         limit: int = 50,
         offset: int = 0,
+        q: Optional[str] = None,
         event_id: Optional[str] = None,
         detected_format: Optional[str] = None,
         severity: Optional[str] = None,
@@ -132,6 +133,22 @@ class EventRepository:
         """Queries events with pagination, sorting newest-first, and server-side filtering."""
         stmt = select(EventModel)
         count_stmt = select(func.count(EventModel.id))
+
+        # Filter: free-text search (q) across relevant fields
+        if q and q.strip():
+            term = f"%{q.strip()}%"
+            search_clause = or_(
+                EventModel.event_id.ilike(term),
+                EventModel.source_ip.ilike(term),
+                EventModel.destination_ip.ilike(term),
+                EventModel.protocol.ilike(term),
+                EventModel.action.ilike(term),
+                EventModel.detected_format.ilike(term),
+                EventModel.severity.ilike(term),
+                EventModel.raw_event.ilike(term),
+            )
+            stmt = stmt.where(search_clause)
+            count_stmt = count_stmt.where(search_clause)
 
         # Filter: event_id
         if event_id:

@@ -148,3 +148,42 @@ def test_malformed_logs_do_not_crash_application(test_client: TestClient):
     # Verify server is still alive
     health = test_client.get("/health")
     assert health.status_code == 200
+
+
+def test_logs_free_text_search_q(test_client: TestClient, sample_json_log: str, sample_cef_log: str):
+    """Test q free-text search across IPs, protocols, and payloads."""
+    test_client.post("/api/v1/logs/process", json={"raw_log": sample_json_log})
+    test_client.post("/api/v1/logs/process", json={"raw_log": sample_cef_log})
+
+    # Search by IP
+    res_ip = test_client.get("/api/v1/logs?q=10.0.0.15")
+    assert res_ip.status_code == 200
+    data_ip = res_ip.json()
+    assert data_ip["total"] == 1
+    assert data_ip["events"][0]["source_ip"] == "10.0.0.15"
+
+    # Search by format name
+    res_cef = test_client.get("/api/v1/logs?q=cef")
+    assert res_cef.status_code == 200
+    assert res_cef.json()["total"] == 1
+    assert res_cef.json()["events"][0]["detected_format"] == "cef"
+
+    # Search non-matching term
+    res_none = test_client.get("/api/v1/logs?q=nonexistentterm12345")
+    assert res_none.status_code == 200
+    assert res_none.json()["total"] == 0
+    assert len(res_none.json()["events"]) == 0
+
+
+def test_logs_protocol_action_and_destination_filters(test_client: TestClient, sample_json_log: str, sample_cef_log: str):
+    """Test filtering by protocol, action, and destination_ip."""
+    test_client.post("/api/v1/logs/process", json={"raw_log": sample_json_log})
+    test_client.post("/api/v1/logs/process", json={"raw_log": sample_cef_log})
+
+    # Filter by action if available
+    res_act = test_client.get("/api/v1/logs?action=block")
+    assert res_act.status_code == 200
+    # Destination IP filter
+    res_dst = test_client.get("/api/v1/logs?destination_ip=192.168.1.1")
+    assert res_dst.status_code == 200
+
