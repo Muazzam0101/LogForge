@@ -1,5 +1,8 @@
 import {
   ApiClientError,
+  AnalyticsDistributions,
+  AnalyticsOverview,
+  AnalyticsSummary,
   BatchLogProcessRequest,
   BatchProcessResponse,
   HealthResponse,
@@ -8,6 +11,7 @@ import {
   LogQueryParams,
   ProcessingResult,
   StoredEventDetail,
+  TrendPoint,
 } from "./types";
 
 const getApiBaseUrl = (): string => {
@@ -235,6 +239,142 @@ export const ulpfApi = {
       throw new UlpfApiError(
         `Failed to retrieve details for event '${eventId}'.`,
         "FETCH_FAILED",
+        err
+      );
+    }
+  },
+
+  /**
+   * Fetch consolidated dashboard analytics overview (summary + distributions + trends)
+   */
+  async getAnalyticsOverview(timeRange: string = "24h"): Promise<AnalyticsOverview> {
+    const url = `${getApiBaseUrl()}/api/v1/analytics/overview?time_range=${encodeURIComponent(timeRange)}`;
+
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        const errorObj = data.detail?.error || data.error;
+        throw new UlpfApiError(
+          errorObj?.message || `Failed to fetch analytics overview (HTTP ${res.status})`,
+          errorObj?.code || `HTTP_${res.status}`,
+          errorObj?.details
+        );
+      }
+
+      return data as AnalyticsOverview;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError(
+        "Unable to fetch operational analytics from LogForge backend.",
+        "ANALYTICS_UNAVAILABLE",
+        err
+      );
+    }
+  },
+
+  /**
+   * Fetch top-level dashboard KPI summary
+   */
+  async getAnalyticsSummary(): Promise<AnalyticsSummary> {
+    const url = `${getApiBaseUrl()}/api/v1/analytics/summary`;
+
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        const errorObj = data.detail?.error || data.error;
+        throw new UlpfApiError(
+          errorObj?.message || `Failed to fetch analytics summary (HTTP ${res.status})`,
+          errorObj?.code || `HTTP_${res.status}`,
+          errorObj?.details
+        );
+      }
+
+      return data as AnalyticsSummary;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError(
+        "Unable to fetch KPI summary from LogForge backend.",
+        "ANALYTICS_UNAVAILABLE",
+        err
+      );
+    }
+  },
+
+  /**
+   * Fetch categorical format, severity, action, and endpoint distributions
+   */
+  async getAnalyticsDistributions(): Promise<AnalyticsDistributions> {
+    const url = `${getApiBaseUrl()}/api/v1/analytics/distributions`;
+
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        const errorObj = data.detail?.error || data.error;
+        throw new UlpfApiError(
+          errorObj?.message || `Failed to fetch distributions (HTTP ${res.status})`,
+          errorObj?.code || `HTTP_${res.status}`,
+          errorObj?.details
+        );
+      }
+
+      return data as AnalyticsDistributions;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError(
+        "Unable to fetch distributions from LogForge backend.",
+        "ANALYTICS_UNAVAILABLE",
+        err
+      );
+    }
+  },
+
+  /**
+   * Fetch time-series event trends
+   */
+  async getAnalyticsTrends(timeRange: string = "24h"): Promise<TrendPoint[]> {
+    const url = `${getApiBaseUrl()}/api/v1/analytics/trends?time_range=${encodeURIComponent(timeRange)}`;
+
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        const errorObj = data.detail?.error || data.error;
+        throw new UlpfApiError(
+          errorObj?.message || `Failed to fetch event trends (HTTP ${res.status})`,
+          errorObj?.code || `HTTP_${res.status}`,
+          errorObj?.details
+        );
+      }
+
+      return data as TrendPoint[];
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError(
+        "Unable to fetch event trends from LogForge backend.",
+        "ANALYTICS_UNAVAILABLE",
         err
       );
     }

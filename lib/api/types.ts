@@ -179,3 +179,47 @@ export interface LogFilterState {
   end_time: string;
 }
 
+export interface AnalyticsSummary {
+  total_events: number;
+  events_today: number;
+  events_last_24h: number;
+  high_severity_events: number;
+  critical_severity_events: number;
+  blocked_events: number;
+  active_sources_count: number;
+}
+
+export interface DistributionItem {
+  name: string;
+  count: number;
+  percentage: number;
+}
+
+export interface TopEndpointItem {
+  ip: string;
+  count: number;
+}
+
+export interface TrendPoint {
+  timestamp: string;
+  ingested: number;
+  normalized: number;
+  alerts: number;
+}
+
+export interface AnalyticsDistributions {
+  format_distribution: DistributionItem[];
+  severity_distribution: DistributionItem[];
+  action_distribution: DistributionItem[];
+  top_source_ips: TopEndpointItem[];
+  top_destination_ips: TopEndpointItem[];
+}
+
+export interface AnalyticsOverview {
+  summary: AnalyticsSummary;
+  distributions: AnalyticsDistributions;
+  trends: TrendPoint[];
+  time_range: string;
+}
+
+

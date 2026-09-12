@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
-from .api.routes import health, logs
+from .api.routes import analytics, health, logs
 from .core.config import settings
 from .core.logging import logger
 
@@ -100,3 +100,4 @@ async def general_exception_handler(
 # Include Routers
 app.include_router(health.router)
 app.include_router(logs.router, prefix=settings.API_V1_PREFIX)
+app.include_router(analytics.router, prefix=settings.API_V1_PREFIX)

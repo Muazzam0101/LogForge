@@ -115,7 +115,7 @@ copy .env.example .env
 # Apply Alembic database migrations
 alembic upgrade head
 
-# Run full automated test suite (66 tests)
+# Run full automated test suite (74 tests)
 pytest -v
 
 # Start the backend server
@@ -148,22 +148,26 @@ docker-compose down
 
 ---
 
-## 🗄️ Database Architecture & Storage (Phase 3)
+## 🗄️ Database Architecture & Storage (Phase 3 & 6)
 
-LogForge leverages **PostgreSQL** with **SQLAlchemy 2.x** and **Alembic** for tamper-evident, lossless security telemetry persistence:
+LogForge leverages **MySQL / PostgreSQL** with **SQLAlchemy 2.x** and **Alembic** for tamper-evident, lossless security telemetry persistence and high-performance SQL analytics:
 
 - **100% Lossless Raw Event Storage:** The exact original string received is stored unmodified in `raw_event` text column (no trimming, mutation, or re-encoding).
 - **Separate Normalized JSONB:** The normalized canonical schema is stored in `normalized_event` (`jsonb` / `json`), and custom vendor extensions are stored in `additional_fields` (`jsonb` / `json`).
 - **Cryptographic Tamper-Evidence:** Retains the immutable SHA-256 hash computed at ingestion in `sha256_hash`.
 - **Comprehensive Indexing:** High-performance B-Tree indexes on `timestamp DESC`, `event_id`, `severity`, `log_format`, `source_ip`, `destination_ip`, `action`, and `sha256_hash`.
-- **Safe Degradation:** If PostgreSQL is unreachable, the system fails gracefully with an opaque HTTP 503 error (`DATABASE_UNAVAILABLE`), strictly concealing connection strings, passwords, and SQL dialect details.
+- **Safe Degradation:** If database storage is unreachable, the system fails gracefully with an opaque HTTP 503 error (`DATABASE_UNAVAILABLE`), strictly concealing connection strings, passwords, and SQL dialect details.
 
 ### API Endpoints Overview
 
 | Method | Path | Description |
 | :--- | :--- | :--- |
-| `GET` | `/health` | Core framework health status |
+| `GET` | `/health` | Core framework health status & registered parser catalog |
 | `POST` | `/api/v1/logs/process` | Ingest single log, detect format, normalize, compute SHA-256, persist to DB |
 | `POST` | `/api/v1/logs/batch` | Ingest log batch, detect formats, normalize, compute hashes, persist batch |
-| `GET` | `/api/v1/logs` | Query stored logs (server-side pagination, filters: severity, format, IP, action, dates) |
+| `GET` | `/api/v1/logs` | Query stored logs (server-side pagination, free-text search `q`, filters) |
 | `GET` | `/api/v1/logs/{event_id}` | Retrieve complete audit record by UUID for deep forensic inspection |
+| `GET` | `/api/v1/analytics/overview` | Consolidated operational metrics, distributions, and time-series trends |
+| `GET` | `/api/v1/analytics/summary` | Real-time KPI summary (total events, today's count, 24h volume, alerts) |
+| `GET` | `/api/v1/analytics/distributions` | SQL-aggregated format, severity, action, and top IP distributions |
+| `GET` | `/api/v1/analytics/trends` | Time-series volume intervals (24h hourly, 7d daily, 30d daily) |
