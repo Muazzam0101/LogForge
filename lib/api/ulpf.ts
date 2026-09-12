@@ -12,7 +12,14 @@ import {
   ProcessingResult,
   StoredEventDetail,
   TrendPoint,
+  AnomalyDetail,
+  AnomalyListResponse,
+  AnomalySummaryResponse,
+  ModelStatusResponse,
+  ModelTrainingRequest,
+  ModelTrainingResponse,
 } from "./types";
+
 
 const getApiBaseUrl = (): string => {
   return process.env.NEXT_PUBLIC_ULPF_API_URL || "http://127.0.0.1:8000";
@@ -379,4 +386,162 @@ export const ulpfApi = {
       );
     }
   },
+
+  /**
+   * Get Isolation Forest ML engine operational status
+   */
+  async getModelStatus(): Promise<ModelStatusResponse> {
+    const url = `${getApiBaseUrl()}/api/v1/ml/status`;
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new UlpfApiError(
+          data.detail?.message || `Failed to fetch ML model status (HTTP ${res.status})`,
+          "ML_STATUS_ERROR"
+        );
+      }
+      return data as ModelStatusResponse;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError(
+        "Unable to fetch ML model status from LogForge backend.",
+        "ML_UNAVAILABLE",
+        err
+      );
+    }
+  },
+
+  /**
+   * Trigger on-demand training / calibration of Isolation Forest model
+   */
+  async trainModel(params?: ModelTrainingRequest): Promise<ModelTrainingResponse> {
+    const url = `${getApiBaseUrl()}/api/v1/ml/train`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(params || {}),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const msg = typeof data.detail === "string" ? data.detail : data.detail?.message || "Model training failed";
+        throw new UlpfApiError(msg, `HTTP_${res.status}`, data.detail);
+      }
+      return data as ModelTrainingResponse;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError(
+        "Failed to trigger ML model training.",
+        "ML_TRAINING_ERROR",
+        err
+      );
+    }
+  },
+
+  /**
+   * Get paginated list of anomalies with joined event context
+   */
+  async getAnomalies(params?: {
+    page?: number;
+    pageSize?: number;
+    classification?: string;
+    minScore?: number;
+  }): Promise<AnomalyListResponse> {
+    const query = new URLSearchParams();
+    if (params?.page) query.append("page", params.page.toString());
+    if (params?.pageSize) query.append("page_size", params.pageSize.toString());
+    if (params?.classification) query.append("classification", params.classification);
+    if (params?.minScore !== undefined) query.append("min_score", params.minScore.toString());
+
+    const url = `${getApiBaseUrl()}/api/v1/ml/anomalies?${query.toString()}`;
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new UlpfApiError(
+          data.detail?.message || `Failed to fetch anomalies (HTTP ${res.status})`,
+          `HTTP_${res.status}`
+        );
+      }
+      return data as AnomalyListResponse;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError(
+        "Unable to fetch anomalies from LogForge backend.",
+        "ML_UNAVAILABLE",
+        err
+      );
+    }
+  },
+
+  /**
+   * Get anomaly KPI summary and top anomalous sources for dashboard
+   */
+  async getAnomalySummary(): Promise<AnomalySummaryResponse> {
+    const url = `${getApiBaseUrl()}/api/v1/ml/anomalies/summary`;
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new UlpfApiError(
+          data.detail?.message || `Failed to fetch anomaly summary (HTTP ${res.status})`,
+          `HTTP_${res.status}`
+        );
+      }
+      return data as AnomalySummaryResponse;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError(
+        "Unable to fetch anomaly summary from LogForge backend.",
+        "ML_UNAVAILABLE",
+        err
+      );
+    }
+  },
+
+  /**
+   * Get anomaly scoring and explainability for a single event ID
+   */
+  async getAnomalyDetail(eventId: string): Promise<AnomalyDetail> {
+    const url = `${getApiBaseUrl()}/api/v1/ml/anomalies/${encodeURIComponent(eventId)}`;
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new UlpfApiError(
+          data.detail || `Failed to fetch anomaly detail (HTTP ${res.status})`,
+          `HTTP_${res.status}`
+        );
+      }
+      return data as AnomalyDetail;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError(
+        `Unable to fetch anomaly detail for event ${eventId}.`,
+        "ML_UNAVAILABLE",
+        err
+      );
+    }
+  },
 };
+

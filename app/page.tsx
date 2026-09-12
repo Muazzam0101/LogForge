@@ -9,6 +9,7 @@ import { EventTrend } from "@/components/dashboard/EventTrend";
 import { LogSources } from "@/components/dashboard/LogSources";
 import { RecentEvents } from "@/components/dashboard/RecentEvents";
 import { SecurityAlerts } from "@/components/dashboard/SecurityAlerts";
+import { AIAnomalySection } from "@/components/dashboard/AIAnomalySection";
 import { ProcessingHealth } from "@/components/dashboard/ProcessingHealth";
 import { EventDetailModal } from "@/components/explorer/EventDetailModal";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
@@ -145,6 +146,12 @@ export default function DashboardPage() {
       <ScrollReveal direction="up" delay={150} duration={600}>
         <MetricCards summary={summary} isLoading={isLoading} />
       </ScrollReveal>
+
+      {/* AI/ML Anomaly Intelligence Layer */}
+      <ScrollReveal direction="up" delay={160} duration={600}>
+        <AIAnomalySection onEventSelect={handleInspectEvent} />
+      </ScrollReveal>
+
 
       {/* Middle Section: Real Event Trends + Real Log Distributions */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 sm:gap-6">

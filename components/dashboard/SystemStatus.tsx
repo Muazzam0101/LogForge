@@ -39,8 +39,8 @@ export function SystemStatus({ health, isLoading }: SystemStatusProps) {
     {
       name: "AI Anomaly Detection",
       icon: Brain,
-      status: "Scheduled for Phase 7",
-      isLive: false,
+      status: isOnline ? "Active (Isolation Forest)" : "Standby",
+      isLive: isOnline,
     },
   ];
 

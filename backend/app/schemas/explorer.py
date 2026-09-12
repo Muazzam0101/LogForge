@@ -24,6 +24,7 @@ class EventDetailResponse(BaseModel):
     additional_fields: Optional[Dict[str, Any]] = None
     sha256_hash: str
     created_at: datetime
+    anomaly: Optional[Dict[str, Any]] = None
 
 
 class EventSummaryItem(BaseModel):

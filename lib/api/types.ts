@@ -135,10 +135,23 @@ export interface StoredEventSummary {
   created_at: string;
 }
 
+export interface AnomalyDetail {
+  event_id: string;
+  anomaly_score: number;
+  classification: "Normal" | "Suspicious" | "Highly Anomalous" | string;
+  explanation: string;
+  model_name: string;
+  model_version: string;
+  features_snapshot?: Record<string, number> | null;
+  created_at: string;
+}
+
 export interface StoredEventDetail extends StoredEventSummary {
   normalized_event: NormalizedEvent | null;
   additional_fields: Record<string, unknown> | null;
+  anomaly?: AnomalyDetail | null;
 }
+
 
 export interface LogListResponse {
   total: number;
@@ -220,6 +233,75 @@ export interface AnalyticsOverview {
   distributions: AnalyticsDistributions;
   trends: TrendPoint[];
   time_range: string;
+}
+
+export interface AnomalyListItem {
+  id: number;
+  event_id: string;
+  anomaly_score: number;
+  classification: "Normal" | "Suspicious" | "Highly Anomalous" | string;
+  explanation: string;
+  created_at: string;
+  source_ip: string | null;
+  destination_ip: string | null;
+  destination_port: number | null;
+  protocol: string | null;
+  action: string | null;
+  severity: string | null;
+}
+
+export interface AnomalyListResponse {
+  total: number;
+  page: number;
+  page_size: number;
+  items: AnomalyListItem[];
+}
+
+export interface AnomalousSource {
+  source_ip: string;
+  count: number;
+  avg_score: number;
+  max_score: number;
+}
+
+export interface AnomalySummaryResponse {
+  total_scored_events: number;
+  normal_count: number;
+  suspicious_count: number;
+  highly_anomalous_count: number;
+  average_anomaly_score: number;
+  model_name: string;
+  model_version: string;
+  is_trained: boolean;
+  last_trained_at: string | null;
+  top_anomalous_sources: AnomalousSource[];
+}
+
+export interface ModelTrainingRequest {
+  contamination?: number;
+  max_samples?: number;
+  rescore_existing?: boolean;
+}
+
+export interface ModelTrainingResponse {
+  status: string;
+  message: string;
+  model_name: string;
+  model_version: string;
+  events_trained: number;
+  anomalies_scored: number;
+  contamination: number;
+  trained_at: string;
+}
+
+export interface ModelStatusResponse {
+  is_trained: boolean;
+  model_name: string;
+  model_version: string;
+  contamination: number;
+  samples_count?: number | null;
+  features_count?: number | null;
+  trained_at?: string | null;
 }
 
 

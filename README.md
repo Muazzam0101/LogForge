@@ -171,3 +171,24 @@ LogForge leverages **MySQL / PostgreSQL** with **SQLAlchemy 2.x** and **Alembic*
 | `GET` | `/api/v1/analytics/summary` | Real-time KPI summary (total events, today's count, 24h volume, alerts) |
 | `GET` | `/api/v1/analytics/distributions` | SQL-aggregated format, severity, action, and top IP distributions |
 | `GET` | `/api/v1/analytics/trends` | Time-series volume intervals (24h hourly, 7d daily, 30d daily) |
+| `GET` | `/api/v1/ml/status` | Active Isolation Forest model operational status & version |
+| `POST` | `/api/v1/ml/train` | On-demand training / calibration of Isolation Forest on database events |
+| `GET` | `/api/v1/ml/anomalies` | Paginated anomaly events list with joined security event context |
+| `GET` | `/api/v1/ml/anomalies/summary` | Aggregate anomaly KPIs (normal, suspicious, highly anomalous, top sources) |
+| `GET` | `/api/v1/ml/anomalies/{event_id}` | Detailed anomaly score and domain explainability justification for event |
+
+---
+
+## 🧠 AI/ML Anomaly Detection Layer (Phase 7)
+
+LogForge features a local, air-gapped, explainable AI/ML anomaly detection pipeline powered by **scikit-learn Isolation Forest**:
+
+- **14-Dimensional Feature Engineering:** Numerical representation covering source/destination ports, privileged/remote port classifications, encoded protocol, enforcement action, severity levels, UTC temporal window, and internal/external ingress boundary directionality.
+- **Normalized Anomaly Scores `[0.0, 1.0]`:** Normalized scoring mapped to three distinct confidence tiers:
+  - `Normal` (`< 0.40`): Aligns with baseline operational traffic.
+  - `Suspicious` (`0.40 - 0.69`): Elevated statistical deviation warranting review.
+  - `Highly Anomalous` (`≥ 0.70`): Multi-vector outlier behavior flagged for immediate triage.
+- **Domain-Specific Explainability:** Generates human-readable, domain-specific justifications (e.g. repeated perimeter blocks, off-hours execution, ingress crossing private boundary, SSH/RDP targeting) instead of opaque black-box numbers.
+- **Non-Blocking Ingestion Hook:** Real-time inference safely wraps anomaly scoring so log ingestion and normalization throughput are 100% immune to model errors.
+- **Model Persistence:** Fitted models and calibration metadata are serialized via `joblib` in `backend/models/`.
+

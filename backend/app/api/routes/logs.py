@@ -8,7 +8,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from ...core.logging import logger
+from ...db.repositories.anomaly_repository import AnomalyRepository
 from ...db.repositories.event_repository import EventRepository
+from ...ml.scoring import batch_score_events_safely, score_event_safely
 from ...schemas.event import ProcessingResult
 from ...schemas.explorer import EventDetailResponse, EventListResponse, EventSummaryItem
 from ...schemas.ingestion import BatchLogProcessRequest, LogProcessRequest
@@ -90,6 +92,25 @@ def process_log(
             },
         )
 
+    # 3. Non-blocking AI/ML Anomaly Scoring
+    try:
+        norm = result.normalized_event
+        event_dict = {
+            "event_id": result.event_id,
+            "raw_log": payload.raw_log,
+            "source_ip": norm.source_ip if norm else None,
+            "destination_ip": norm.destination_ip if norm else None,
+            "source_port": norm.source_port if norm else None,
+            "destination_port": norm.destination_port if norm else None,
+            "protocol": norm.protocol if norm else None,
+            "action": norm.action if norm else None,
+            "severity": norm.severity if norm else None,
+            "timestamp": norm.timestamp if norm else None,
+        }
+        score_event_safely(event_dict, db)
+    except Exception as ml_err:
+        logger.warning("Non-blocking AI scoring exception ignored: %s", str(ml_err))
+
     return result
 
 
@@ -143,6 +164,28 @@ def process_batch(
                     },
                 },
             )
+
+        # 3. Non-blocking AI/ML Batch Anomaly Scoring
+        try:
+            event_dicts = [
+                {
+                    "event_id": r.event_id,
+                    "raw_log": payload.raw_logs[idx] if idx < len(payload.raw_logs) else "",
+                    "source_ip": r.normalized_event.source_ip if r.normalized_event else None,
+                    "destination_ip": r.normalized_event.destination_ip if r.normalized_event else None,
+                    "source_port": r.normalized_event.source_port if r.normalized_event else None,
+                    "destination_port": r.normalized_event.destination_port if r.normalized_event else None,
+                    "protocol": r.normalized_event.protocol if r.normalized_event else None,
+                    "action": r.normalized_event.action if r.normalized_event else None,
+                    "severity": r.normalized_event.severity if r.normalized_event else None,
+                    "timestamp": r.normalized_event.timestamp if r.normalized_event else None,
+                }
+                for idx, r in enumerate(results)
+                if r.status == "success"
+            ]
+            batch_score_events_safely(event_dicts, db)
+        except Exception as ml_err:
+            logger.warning("Non-blocking AI batch scoring exception ignored: %s", str(ml_err))
 
     if successful == 0 and len(results) > 0:
         batch_status = "failed"
@@ -305,4 +348,21 @@ def get_log_by_event_id(
             },
         )
 
-    return EventDetailResponse.model_validate(record)
+    detail_res = EventDetailResponse.model_validate(record)
+    try:
+        anomaly = AnomalyRepository(db).get_by_event_id(event_id)
+        if anomaly:
+            detail_res.anomaly = {
+                "event_id": anomaly.event_id,
+                "anomaly_score": anomaly.anomaly_score,
+                "classification": anomaly.classification,
+                "explanation": anomaly.explanation,
+                "model_name": anomaly.model_name,
+                "model_version": anomaly.model_version,
+                "features_snapshot": anomaly.features_snapshot,
+                "created_at": anomaly.created_at.isoformat() if anomaly.created_at else None,
+            }
+    except Exception as exc:
+        logger.warning("Could not attach anomaly record for %s: %s", event_id, str(exc))
+
+    return detail_res
