@@ -35,7 +35,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0F1014] text-slate-900 dark:text-[#F5F5F7] transition-colors flex">
       {/* Permanently Fixed Sidebar */}
       <Sidebar
         isOpen={isSidebarOpen}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Outfit, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { DashboardShell } from "@/components/layout/DashboardShell";
+import { ThemeProvider } from "@/components/context/ThemeContext";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -29,9 +30,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${outfit.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${outfit.variable} ${jetbrainsMono.variable}`}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var theme = localStorage.getItem('logforge_theme');
+                if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                  document.documentElement.classList.add('dark');
+                  document.documentElement.setAttribute('data-theme', 'dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.setAttribute('data-theme', 'light');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans antialiased selection:bg-orange-100 selection:text-orange-900">
-        <DashboardShell>{children}</DashboardShell>
+        <ThemeProvider>
+          <DashboardShell>{children}</DashboardShell>
+        </ThemeProvider>
       </body>
     </html>
   );

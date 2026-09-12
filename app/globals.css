@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -7,36 +9,298 @@
 
 @layer base {
   :root {
-    --background: #f8f9fb;
-    --foreground: #111827;
-    --card: #ffffff;
-    --card-foreground: #111827;
-    --border: #edf0f4;
-    --muted: #f4f5f8;
-    --muted-foreground: #6b7280;
-    --brand-primary: #ea384d;
-    --brand-orange: #f95738;
-    --brand-coral: #ff5436;
-    --brand-purple: #6c5ce7;
-    --brand-dark-purple: #31234b;
-    --brand-amber: #f59e0b;
-    --brand-light: #fff5f3;
+    --bg-canvas: #f8fafc;
+    --bg-sidebar: #fafbfe;
+    --bg-card: #ffffff;
+    --bg-elevated: #f1f5f9;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --border-subtle: #edf0f4;
+  }
+
+  .dark {
+    --bg-canvas: #0F1014;
+    --bg-sidebar: #0A0B0F;
+    --bg-card: #17191F;
+    --bg-elevated: #1D2027;
+    --text-primary: #F5F5F7;
+    --text-secondary: #A5A7B0;
+    --border-subtle: #292C35;
   }
 
   * {
-    border-color: var(--border);
+    border-color: var(--border-subtle);
   }
 
   body {
-    background-color: #f8f9fb;
-    color: #111827;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 }
 
-/* Custom scrollbar */
+/* ==========================================================================
+   EXACT SPECIFICATION DARK THEME (#0F1014, #0A0B0F, #17191F, #1D2027)
+   Overall feel: Charcoal → Violet → Orange → Coral → Amber
+   ========================================================================== */
+
+/* Main Background: Deep Charcoal (#0F1014) */
+.dark body,
+.dark .bg-\[\#f8fafc\],
+.dark .bg-\[\#f8f9fb\] {
+  background-color: #0F1014 !important;
+}
+
+/* Sidebar: Near Black (#0A0B0F) */
+.dark aside,
+.dark .bg-\[\#fafbfe\] {
+  background-color: #0A0B0F !important;
+  border-color: #292C35 !important;
+}
+
+/* Cards & Surfaces: Dark Graphite (#17191F) */
+.dark .bg-white {
+  background-color: #17191F;
+}
+
+/* Elevated Cards & Inner Modules: Elevated Graphite (#1D2027) */
+.dark .bg-slate-50,
+.dark .bg-slate-50\/90,
+.dark .bg-slate-50\/80,
+.dark .bg-slate-50\/70,
+.dark .bg-slate-50\/60,
+.dark .bg-slate-50\/30,
+.dark .bg-slate-100,
+.dark .bg-slate-100\/90,
+.dark .bg-slate-100\/80,
+.dark .bg-slate-100\/70,
+.dark .bg-white\/90,
+.dark .bg-white\/95 {
+  background-color: #1D2027 !important;
+}
+
+.dark .bg-slate-200,
+.dark .bg-slate-200\/80,
+.dark .bg-slate-300 {
+  background-color: #292C35;
+}
+
+/* Neutral & Elevated Hover States in Dark Mode - Eliminates all white leaks on hover */
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-slate-50\/40:hover,
+.dark .hover\:bg-slate-50\/60:hover,
+.dark .hover\:bg-slate-50\/80:hover,
+.dark .hover\:bg-slate-50\/90:hover,
+.dark .hover\:bg-slate-100:hover,
+.dark .hover\:bg-slate-100\/60:hover,
+.dark .hover\:bg-slate-100\/80:hover,
+.dark .hover\:bg-slate-100\/90:hover,
+.dark .hover\:bg-slate-200:hover,
+.dark .hover\:bg-slate-200\/60:hover,
+.dark .hover\:bg-slate-200\/80:hover,
+.dark .hover\:bg-slate-300:hover,
+.dark .hover\:bg-white:hover {
+  background-color: #1D2027 !important;
+}
+
+/* Form Controls & Inputs Focus & Hover States in Dark Mode */
+.dark .focus\:bg-white:focus,
+.dark .focus\:bg-slate-50:focus {
+  background-color: #17191F !important;
+}
+
+.dark .hover\:bg-slate-50:hover input,
+.dark input:hover,
+.dark textarea:hover {
+  background-color: #1D2027 !important;
+}
+
+.dark input:focus,
+.dark textarea:focus {
+  background-color: #17191F !important;
+  border-color: #8B5CF6 !important;
+}
+
+/* Form Controls & Inputs in Dark Mode */
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark textarea,
+.dark select {
+  background-color: #17191F !important;
+  color: #F5F5F7 !important;
+  border-color: #292C35 !important;
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"])::placeholder,
+.dark textarea::placeholder {
+  color: rgba(165, 167, 176, 0.6) !important;
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]):focus,
+.dark textarea:focus {
+  background-color: #1D2027 !important;
+  border-color: #8B5CF6 !important;
+}
+
+/* Borders: Subtle Gray (#292C35) */
+.dark .border-slate-50,
+.dark .border-slate-100,
+.dark .border-slate-150,
+.dark .border-slate-200,
+.dark .border-slate-200\/80,
+.dark .border-slate-200\/70,
+.dark .border-slate-200\/60,
+.dark .border-slate-200\/90,
+.dark .border-\[\#edf0f4\] {
+  border-color: #292C35 !important;
+}
+
+.dark .hover\:border-slate-100:hover,
+.dark .hover\:border-slate-200:hover,
+.dark .hover\:border-slate-300:hover {
+  border-color: #292C35 !important;
+}
+
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #292C35;
+}
+
+/* Primary Text: Soft White (#F5F5F7) */
+.dark .text-slate-900,
+.dark .text-slate-800 {
+  color: #F5F5F7;
+}
+
+/* Secondary Text: Cool Gray (#A5A7B0) */
+.dark .text-slate-700,
+.dark .text-slate-600,
+.dark .text-slate-500,
+.dark .text-slate-400 {
+  color: #A5A7B0;
+}
+
+/* Hover text contrast in dark mode */
+.dark .hover\:text-slate-900:hover,
+.dark .hover\:text-slate-800:hover,
+.dark .hover\:text-slate-700:hover,
+.dark .hover\:text-slate-600:hover {
+  color: #F5F5F7 !important;
+}
+
+/* Primary Accent: Violet (#8B5CF6) & Hover (#6D28D9) */
+.dark .bg-orange-600 {
+  background-color: #8B5CF6;
+}
+.dark .hover\:bg-orange-700:hover,
+.dark .bg-orange-600:hover {
+  background-color: #6D28D9;
+}
+
+.dark .text-orange-600,
+.dark .text-orange-700 {
+  color: #8B5CF6;
+}
+.dark .hover\:text-orange-700:hover,
+.dark .hover\:text-orange-900:hover {
+  color: #A78BFA;
+}
+
+.dark .border-orange-200,
+.dark .border-orange-200\/80,
+.dark .border-orange-200\/70,
+.dark .border-orange-100 {
+  border-color: rgba(139, 92, 246, 0.35);
+}
+
+.dark .bg-orange-50,
+.dark .bg-orange-50\/60,
+.dark .bg-orange-50\/70,
+.dark .bg-orange-50\/80,
+.dark .bg-orange-50\/90,
+.dark .bg-orange-100 {
+  background-color: rgba(139, 92, 246, 0.15);
+  color: #C4B5FD;
+}
+
+.dark .hover\:bg-orange-50:hover,
+.dark .hover\:bg-orange-100:hover {
+  background-color: rgba(139, 92, 246, 0.25) !important;
+  color: #DDD6FE !important;
+}
+
+.dark .focus\:border-orange-500:focus,
+.dark .focus\:border-purple-500:focus {
+  border-color: #8B5CF6 !important;
+}
+
+.dark .focus\:ring-orange-500\/20:focus {
+  --tw-ring-color: rgba(139, 92, 246, 0.3) !important;
+}
+
+/* AI / ML: Purple (#A855F7) */
+.dark .text-purple-600,
+.dark .text-purple-700 {
+  color: #A855F7;
+}
+.dark .bg-purple-50,
+.dark .bg-purple-100 {
+  background-color: rgba(168, 85, 247, 0.15);
+  color: #D8B4FE;
+}
+
+/* Critical: Coral Red (#EF4444) */
+.dark .text-rose-600,
+.dark .text-rose-700,
+.dark .text-red-600,
+.dark .text-red-700 {
+  color: #EF4444;
+}
+.dark .bg-rose-50,
+.dark .bg-rose-100,
+.dark .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #FCA5A5;
+}
+.dark .border-rose-200,
+.dark .border-red-200 {
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+/* Warning: Amber (#F59E0B) */
+.dark .text-amber-600,
+.dark .text-amber-700 {
+  color: #F59E0B;
+}
+.dark .bg-amber-50,
+.dark .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #FCD34D;
+}
+.dark .border-amber-200 {
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+/* Row Hover: Subtle Violet Tint */
+.dark tr:hover,
+.dark .hover\:bg-orange-50\/20:hover {
+  background-color: rgba(139, 92, 246, 0.08);
+}
+
+/* Modal Backdrop & Overlays */
+.dark .bg-slate-900\/50,
+.dark .bg-slate-900\/60,
+.dark .bg-slate-900\/30 {
+  background-color: rgba(10, 11, 15, 0.85);
+}
+
+/* Text Selection */
+.dark ::selection {
+  background-color: rgba(139, 92, 246, 0.3);
+  color: #F5F5F7;
+}
+
+/* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -50,6 +314,14 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #292C35;
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6D28D9;
 }
 
 /* Custom Animation Keyframes */
@@ -81,7 +353,7 @@
 
 @keyframes slowSpin {
   from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  to { rotate: 360deg; }
 }
 
 .animate-wave {

@@ -192,24 +192,24 @@ export function LogProcessor({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 p-6 sm:p-7 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+    <div className="bg-white dark:bg-[#17191F] rounded-2xl border border-slate-100 dark:border-[#292C35] p-6 sm:p-7 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
       {/* Header & Quick Presets */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-slate-100 dark:border-[#292C35]">
         <div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <h2 className="text-base font-bold text-slate-900 tracking-tight">
+            <h2 className="text-base font-bold text-slate-900 dark:text-[#F5F5F7] tracking-tight">
               Universal Raw Log Ingestion Terminal
             </h2>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-400 dark:text-[#A5A7B0] mt-0.5">
             Submit any raw security, network, or system log to invoke the live FastAPI ULPF Engine
           </p>
         </div>
 
         {/* Preset Sample Buttons */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[11px] font-semibold text-slate-400 mr-1 hidden sm:inline">
+          <span className="text-[11px] font-semibold text-slate-400 dark:text-[#A5A7B0] mr-1 hidden sm:inline">
             Presets:
           </span>
           {SAMPLE_PRESETS.map((preset) => (
@@ -218,7 +218,7 @@ export function LogProcessor({
               type="button"
               onClick={() => loadPreset(preset)}
               disabled={isProcessing}
-              className="px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-orange-50 text-slate-600 hover:text-orange-700 text-[11px] font-medium border border-slate-200/80 hover:border-orange-200 transition-colors disabled:opacity-50 cursor-pointer"
+              className="px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-[#1D2027] hover:bg-orange-50 dark:hover:bg-[#8B5CF6]/20 text-slate-600 dark:text-[#A5A7B0] hover:text-orange-700 dark:hover:text-[#DDD6FE] text-[11px] font-medium border border-slate-200/80 dark:border-[#292C35] hover:border-orange-200 dark:hover:border-[#8B5CF6] transition-colors disabled:opacity-50 cursor-pointer"
             >
               {preset.label}
             </button>
@@ -280,7 +280,7 @@ export function LogProcessor({
             className={`relative rounded-2xl border transition-all ${
               dragActive
                 ? "border-orange-500 ring-4 ring-orange-500/10 bg-orange-50/20"
-                : "border-slate-200 hover:border-orange-300 focus-within:border-orange-500 focus-within:ring-4 focus-within:ring-orange-500/10"
+                : "border-slate-200 dark:border-[#292C35] hover:border-orange-300 dark:hover:border-[#8B5CF6] focus-within:border-orange-500 dark:focus-within:border-[#8B5CF6] focus-within:ring-4 focus-within:ring-orange-500/10 dark:focus-within:ring-[#8B5CF6]/20 bg-white dark:bg-[#17191F]"
             }`}
           >
             <textarea
@@ -290,12 +290,12 @@ export function LogProcessor({
               onChange={(e) => setRawLog(e.target.value)}
               placeholder="Paste raw log string here (e.g., JSON object, CEF:0|Vendor|..., or Syslog RFC 5424/3164) or drag & drop a .log/.txt file..."
               disabled={isProcessing}
-              className="w-full p-4 pr-8 text-xs font-mono text-slate-800 placeholder:text-slate-400 bg-transparent min-h-[85px] max-h-[260px] resize-y overflow-y-auto rounded-2xl outline-none leading-relaxed transition-[border-color]"
+              className="w-full p-4 pr-8 text-xs font-mono text-slate-800 dark:text-[#F5F5F7] placeholder:text-slate-400 dark:placeholder:text-[#A5A7B0]/60 bg-transparent min-h-[85px] max-h-[260px] resize-y overflow-y-auto rounded-2xl outline-none leading-relaxed transition-[border-color]"
             />
 
             {/* Quick File Drop Hint Pill (positioned away from resize handle) */}
-            <div className="absolute bottom-2.5 right-6 pointer-events-none hidden sm:flex items-center gap-1.5 text-[10px] text-slate-400 bg-white/90 backdrop-blur-xs px-2 py-0.5 rounded-md border border-slate-100 shadow-2xs">
-              <UploadCloud className="w-3 h-3" />
+            <div className="absolute bottom-2.5 right-6 pointer-events-none hidden sm:flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-[#A5A7B0] bg-white/90 dark:bg-[#1D2027] backdrop-blur-xs px-2.5 py-1 rounded-lg border border-slate-100 dark:border-[#292C35] shadow-2xs">
+              <UploadCloud className="w-3 h-3 text-slate-400 dark:text-[#A5A7B0]" />
               <span>Drag & drop file to load</span>
             </div>
           </div>
@@ -305,7 +305,7 @@ export function LogProcessor({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
           {/* Source Hint Input */}
           <div className="flex items-center gap-2 max-w-sm w-full">
-            <span className="text-xs font-medium text-slate-500 shrink-0">
+            <span className="text-xs font-medium text-slate-500 dark:text-[#A5A7B0] shrink-0">
               Source Hint:
             </span>
             <input
@@ -314,7 +314,7 @@ export function LogProcessor({
               onChange={(e) => setSourceHint(e.target.value)}
               placeholder="e.g. cisco_asa, checkpoint_fw (optional)"
               disabled={isProcessing}
-              className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200/80 rounded-xl text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:bg-white transition-colors"
+              className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#17191F] border border-slate-200/80 dark:border-[#292C35] rounded-xl text-slate-700 dark:text-[#F5F5F7] placeholder:text-slate-400 dark:placeholder:text-[#A5A7B0]/60 focus:outline-none focus:border-orange-500 dark:focus:border-[#8B5CF6] focus:bg-white dark:focus:bg-[#17191F] transition-colors"
             />
           </div>
 
@@ -324,7 +324,7 @@ export function LogProcessor({
               type="button"
               onClick={handleClear}
               disabled={isProcessing || (!rawLog && !sourceHint)}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 text-xs font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
+              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-[#292C35] text-slate-600 dark:text-[#A5A7B0] hover:text-slate-900 dark:hover:text-[#F5F5F7] hover:bg-slate-50 dark:hover:bg-[#1D2027] text-xs font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Clear</span>
@@ -333,7 +333,7 @@ export function LogProcessor({
             <button
               type="submit"
               disabled={!rawLog.trim() || isProcessing}
-              className="px-6 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
+              className="px-6 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 dark:bg-[#8B5CF6] dark:hover:bg-[#6D28D9] text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
             >
               {isProcessing ? (
                 <>

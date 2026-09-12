@@ -103,7 +103,7 @@ function NavList({ onClose }: { onClose: () => void }) {
           <div key={item.id} className="relative">
             {/* Left indicator tab (strictly for active item) */}
             {isActive && (
-              <span className="absolute -left-3 sm:-left-3.5 top-1/2 -translate-y-1/2 w-1.5 h-7 bg-[#ea384d] rounded-r-md z-20 shadow-[0_0_8px_rgba(234,56,77,0.4)]" />
+              <span className="absolute -left-3 sm:-left-3.5 top-1/2 -translate-y-1/2 w-1.5 h-7 bg-[#ea384d] dark:bg-[#8B5CF6] rounded-r-md z-20 shadow-[0_0_8px_rgba(234,56,77,0.4)] dark:shadow-[0_0_12px_rgba(139,92,246,0.6)]" />
             )}
 
             <Link
@@ -114,16 +114,16 @@ function NavList({ onClose }: { onClose: () => void }) {
               className={cn(
                 "w-full flex items-center gap-3.5 px-3.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-[13px] sm:text-[13.5px] transition-all duration-150 group cursor-pointer relative",
                 isActive
-                  ? "bg-[#fdeeed] text-[#0f172a] font-bold shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
-                  : "text-[#334155] hover:text-[#0f172a] hover:bg-slate-100/60 font-semibold"
+                  ? "bg-[#fdeeed] dark:bg-[#8B5CF6]/15 text-[#0f172a] dark:text-[#F5F5F7] font-bold shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
+                  : "text-[#334155] dark:text-[#A5A7B0] hover:text-[#0f172a] dark:hover:text-[#F5F5F7] hover:bg-slate-100/60 dark:hover:bg-[#17191F] font-semibold"
               )}
             >
               <Icon
                 className={cn(
                   "w-5 h-5 shrink-0 transition-colors",
                   isActive
-                    ? "text-[#ea384d] stroke-[2.2]"
-                    : "text-[#475569] group-hover:text-[#0f172a] stroke-[1.8]"
+                    ? "text-[#ea384d] dark:text-[#8B5CF6] stroke-[2.2]"
+                    : "text-[#475569] dark:text-[#A5A7B0] group-hover:text-[#0f172a] dark:group-hover:text-[#F5F5F7] stroke-[1.8]"
                 )}
               />
               <span className="truncate tracking-tight leading-none">{item.label}</span>
@@ -145,20 +145,20 @@ function NavListFallback() {
         return (
           <div key={item.id} className="relative">
             {isDashboard && (
-              <span className="absolute -left-3 sm:-left-3.5 top-1/2 -translate-y-1/2 w-1.5 h-7 bg-[#ea384d] rounded-r-md z-20" />
+              <span className="absolute -left-3 sm:-left-3.5 top-1/2 -translate-y-1/2 w-1.5 h-7 bg-[#ea384d] dark:bg-[#8B5CF6] rounded-r-md z-20" />
             )}
             <div
               className={cn(
                 "w-full flex items-center gap-3.5 px-3.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-[13px] sm:text-[13.5px]",
                 isDashboard
-                  ? "bg-[#fdeeed] text-[#0f172a] font-bold"
-                  : "text-[#334155] font-semibold"
+                  ? "bg-[#fdeeed] dark:bg-[#8B5CF6]/15 text-[#0f172a] dark:text-[#F5F5F7] font-bold"
+                  : "text-[#334155] dark:text-[#A5A7B0] font-semibold"
               )}
             >
               <Icon
                 className={cn(
                   "w-5 h-5 shrink-0",
-                  isDashboard ? "text-[#ea384d]" : "text-[#475569]"
+                  isDashboard ? "text-[#ea384d] dark:text-[#8B5CF6]" : "text-[#475569] dark:text-[#A5A7B0]"
                 )}
               />
               <span className="truncate tracking-tight leading-none">{item.label}</span>
@@ -213,7 +213,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Permanently Fixed Sidebar (100vh height, fixed top-0 bottom-0 left-0, never scrolls with page) */}
       <aside
         className={cn(
-          "fixed top-0 bottom-0 left-0 z-40 bg-[#fafbfe] border-r border-[#edf0f4] flex flex-col justify-between transition-all duration-300 ease-in-out select-none overflow-hidden w-64 xl:w-[268px]",
+          "fixed top-0 bottom-0 left-0 z-40 bg-[#fafbfe] dark:bg-[#0A0B0F] border-r border-[#edf0f4] dark:border-[#292C35] flex flex-col justify-between transition-colors duration-300 ease-in-out select-none overflow-hidden w-64 xl:w-[268px]",
           isOpen
             ? "translate-x-0 opacity-100"
             : "-translate-x-full opacity-0 pointer-events-none"
@@ -256,8 +256,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               priority
             />
 
-            {/* Top smooth gradient fade into the light sidebar background */}
-            <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-[#fafbfe] via-[#fafbfe]/70 to-transparent pointer-events-none" />
+            {/* Top smooth gradient fade into the sidebar background */}
+            <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-[#fafbfe] dark:from-[#0A0B0F] via-[#fafbfe]/70 dark:via-[#0A0B0F]/70 to-transparent pointer-events-none transition-colors" />
 
             {/* Bottom vignette for crisp typography */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
