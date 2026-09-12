@@ -43,7 +43,7 @@ export function Pagination({
             type="button"
             onClick={() => onPageChange(0)}
             disabled={page === 0 || isLoading}
-            className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-orange-50/60 hover:text-orange-600 hover:border-orange-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-600 disabled:hover:border-slate-200 transition-colors cursor-pointer"
             title="First Page"
           >
             <ChevronsLeft className="w-3.5 h-3.5" />
@@ -54,7 +54,7 @@ export function Pagination({
             type="button"
             onClick={() => onPageChange(Math.max(0, page - 1))}
             disabled={page === 0 || isLoading}
-            className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-orange-50/60 hover:text-orange-600 hover:border-orange-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-600 disabled:hover:border-slate-200 transition-colors cursor-pointer"
             title="Previous Page"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
@@ -65,7 +65,7 @@ export function Pagination({
             type="button"
             onClick={() => onPageChange(page + 1 < totalPages ? page + 1 : page)}
             disabled={page + 1 >= totalPages || isLoading}
-            className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-orange-50/60 hover:text-orange-600 hover:border-orange-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-600 disabled:hover:border-slate-200 transition-colors cursor-pointer"
             title="Next Page"
           >
             <ChevronRight className="w-3.5 h-3.5" />
@@ -76,7 +76,7 @@ export function Pagination({
             type="button"
             onClick={() => onPageChange(totalPages - 1)}
             disabled={page + 1 >= totalPages || isLoading}
-            className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-orange-50/60 hover:text-orange-600 hover:border-orange-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-600 disabled:hover:border-slate-200 transition-colors cursor-pointer"
             title="Last Page"
           >
             <ChevronsRight className="w-3.5 h-3.5" />

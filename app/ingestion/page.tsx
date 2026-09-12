@@ -181,13 +181,13 @@ export default function IngestionPage() {
     <div className="space-y-6">
       {/* Header Banner */}
       <ScrollReveal direction="up" delay={50} duration={500}>
-        <div className="relative overflow-hidden rounded-3xl bg-white border border-slate-100 p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-100 p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-purple-50 border border-purple-100 text-purple-700 text-xs font-semibold mb-2">
-              <span className="w-2 h-2 rounded-full bg-purple-600 animate-pulse" />
+            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-orange-50 border border-orange-100 text-orange-700 text-xs font-semibold mb-2">
+              <span className="w-2 h-2 rounded-full bg-orange-600 animate-pulse" />
               <span>Universal Log Pre-processing Framework · Live Engine</span>
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
               Log Ingestion & Normalization
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
@@ -198,7 +198,7 @@ export default function IngestionPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={openUploadModal}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all active:scale-95 cursor-pointer"
             >
               <UploadCloud className="w-4 h-4" />
               <span>Upload Batch Logs</span>
@@ -224,8 +224,8 @@ export default function IngestionPage() {
       {/* Results / Error Display Section */}
       <div ref={resultRef}>
         {isProcessing && (
-          <div className="rounded-3xl bg-white border border-purple-100 p-8 text-center shadow-xs animate-in fade-in duration-200">
-            <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mx-auto mb-3">
+          <div className="rounded-2xl bg-white border border-orange-100 p-8 text-center shadow-[0_2px_10px_rgba(0,0,0,0.02)] animate-in fade-in duration-200">
+            <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mx-auto mb-3">
               <Loader2 className="w-6 h-6 animate-spin" />
             </div>
             <h3 className="text-sm font-bold text-slate-800">
@@ -238,7 +238,7 @@ export default function IngestionPage() {
         )}
 
         {processingError && (
-          <div className="rounded-3xl bg-rose-50/70 border border-rose-200/80 p-6 sm:p-7 shadow-xs animate-in fade-in duration-200">
+          <div className="rounded-2xl bg-rose-50/70 border border-rose-200/80 p-6 sm:p-7 shadow-xs animate-in fade-in duration-200">
             <div className="flex items-start gap-3.5">
               <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 mt-0.5">
                 <AlertCircle className="w-5 h-5" />
@@ -279,7 +279,7 @@ export default function IngestionPage() {
 
         {/* Empty placeholder if nothing processed yet */}
         {!isProcessing && !processingError && !activeResult && (
-          <div className="rounded-3xl bg-white border border-slate-100 p-8 text-center shadow-xs">
+          <div className="rounded-2xl bg-white border border-slate-100 p-8 text-center shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
             <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto mb-3">
               <Terminal className="w-6 h-6" />
             </div>
@@ -295,7 +295,7 @@ export default function IngestionPage() {
 
       {/* Interactive Dropzone Card */}
       <ScrollReveal direction="up" delay={200} duration={600}>
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs">
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-bold text-slate-800">
               Direct Log File Ingestion Zone
@@ -312,9 +312,9 @@ export default function IngestionPage() {
               }
             }}
             onClick={() => dropzoneInputRef.current?.click()}
-            className="border-2 border-dashed border-slate-200 hover:border-purple-400 hover:bg-purple-50/20 rounded-2xl p-8 text-center cursor-pointer transition-all group"
+            className="border-2 border-dashed border-slate-200 hover:border-orange-400 hover:bg-orange-50/20 rounded-2xl p-8 text-center cursor-pointer transition-all group"
           >
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-purple-50 group-hover:bg-purple-100 text-purple-600 flex items-center justify-center mb-3 transition-colors shadow-xs">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-orange-50 group-hover:bg-orange-100 text-orange-600 flex items-center justify-center mb-3 transition-colors shadow-xs">
               <UploadCloud className="w-7 h-7 group-hover:scale-110 transition-transform" />
             </div>
             <h3 className="text-sm font-bold text-slate-800">
@@ -330,7 +330,7 @@ export default function IngestionPage() {
                   e.stopPropagation();
                   dropzoneInputRef.current?.click();
                 }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
               >
                 <UploadCloud className="w-3.5 h-3.5" />
                 <span>Browse File & Upload</span>
@@ -342,7 +342,7 @@ export default function IngestionPage() {
                   e.stopPropagation();
                   openUploadModal();
                 }}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-purple-600 hover:underline cursor-pointer"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-orange-600 hover:underline cursor-pointer"
               >
                 <span>Open Detailed Ingestion Modal →</span>
               </button>
@@ -365,7 +365,7 @@ export default function IngestionPage() {
 
       {/* Active Ingestion Pipelines Queue */}
       <ScrollReveal direction="up" delay={250} duration={600}>
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs">
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-sm font-bold text-slate-800">

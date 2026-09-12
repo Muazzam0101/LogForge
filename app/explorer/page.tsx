@@ -57,6 +57,14 @@ function ExplorerContent() {
   const [activeEventDetail, setActiveEventDetail] = useState<StoredEventDetail | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
+  // Seamless redirect if legacy anomaly query parameter is accessed
+  useEffect(() => {
+    const minAnomalyScore = searchParams.get("min_anomaly_score");
+    if (minAnomalyScore) {
+      router.replace("/anomalies");
+    }
+  }, [searchParams, router]);
+
   // Synchronize state with URL query parameters
   const updateUrlParams = useCallback(
     (currentFilters: LogFilterState, currentPage: number) => {
@@ -242,7 +250,7 @@ function ExplorerContent() {
 
       {/* 3. Main Results Table or Empty State Card */}
       <ScrollReveal direction="up" delay={120} duration={550}>
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-xs overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden">
           {events.length === 0 && !isLoading ? (
             <EmptyState
               isFiltered={isFiltered}
@@ -284,7 +292,7 @@ export default function ExplorerPage() {
     <Suspense
       fallback={
         <div className="p-16 text-center space-y-3">
-          <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-8 h-8 border-2 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-xs text-slate-400 font-mono">Loading Logs Explorer...</p>
         </div>
       }

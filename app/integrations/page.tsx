@@ -12,8 +12,8 @@ const integrationsList = [
     status: "Awaiting Cluster URI",
     state: "standby",
     icon: Search,
-    color: "text-purple-600",
-    bg: "bg-purple-50",
+    color: "text-orange-600",
+    bg: "bg-orange-50",
   },
   {
     name: "PostgreSQL Event Store",
@@ -72,13 +72,13 @@ export default function IntegrationsPage() {
     <div className="space-y-6">
       {/* Header */}
       <ScrollReveal direction="up" delay={50} duration={500}>
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-purple-50 border border-purple-100 text-purple-700 text-xs font-semibold mb-2">
+            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-orange-50 border border-orange-100 text-orange-700 text-xs font-semibold mb-2">
               <Layers className="w-3.5 h-3.5" />
               <span>SIEM & Data Lake Connectors</span>
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
               Integrations
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
@@ -101,7 +101,7 @@ export default function IntegrationsPage() {
             return (
               <div
                 key={item.name}
-                className="group bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:border-purple-200/80 hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
+                className="group bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:border-orange-200/80 hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2">
@@ -113,7 +113,7 @@ export default function IntegrationsPage() {
                     </span>
                   </div>
 
-                  <h3 className="text-sm font-bold text-slate-900 mt-3 group-hover:text-purple-700 transition-colors">
+                  <h3 className="text-sm font-bold text-slate-900 mt-3 group-hover:text-orange-600 transition-colors">
                     {item.name}
                   </h3>
                   <p className="text-[11px] font-semibold text-slate-400 mt-0.5">{item.category}</p>
@@ -124,7 +124,7 @@ export default function IntegrationsPage() {
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                   <span className="text-[11px] font-medium text-slate-400">Target Protocol: Ready</span>
-                  <button className="text-xs font-semibold text-purple-600 hover:text-purple-800 transition-colors flex items-center gap-1">
+                  <button className="text-xs font-semibold text-orange-600 hover:text-orange-800 transition-colors flex items-center gap-1 cursor-pointer">
                     <span>Configure</span>
                     <span>→</span>
                   </button>

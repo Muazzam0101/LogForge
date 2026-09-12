@@ -30,7 +30,7 @@ export function SecurityAlerts({ summary, isLoading }: SecurityAlertsProps) {
 
         <Link
           href="/explorer?severity=high"
-          className="text-xs font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-1 group/btn transition-colors cursor-pointer"
+          className="text-xs font-semibold text-orange-600 hover:text-orange-700 flex items-center gap-1 group/btn transition-colors cursor-pointer"
         >
           <span>Filter in Explorer</span>
           <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform duration-200" />

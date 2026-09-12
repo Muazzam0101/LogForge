@@ -30,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${outfit.variable} ${jetbrainsMono.variable}`}>
-      <body className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans antialiased selection:bg-purple-100 selection:text-purple-900">
+      <body className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans antialiased selection:bg-orange-100 selection:text-orange-900">
         <DashboardShell>{children}</DashboardShell>
       </body>
     </html>

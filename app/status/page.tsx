@@ -18,13 +18,13 @@ export default function StatusPage() {
     <div className="space-y-6">
       {/* Header */}
       <ScrollReveal direction="up" delay={50} duration={500}>
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-semibold mb-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>Universal Log Pre-processing Framework Diagnostics</span>
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
               System Status & Health
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
@@ -49,11 +49,11 @@ export default function StatusPage() {
             return (
               <div
                 key={svc.name}
-                className="group bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:border-purple-200/80 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between"
+                className="group bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:border-orange-200/80 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center transition-transform group-hover:scale-105">
+                    <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center transition-transform group-hover:scale-105">
                       <Icon className="w-5 h-5" />
                     </div>
                     <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg">
@@ -62,7 +62,7 @@ export default function StatusPage() {
                     </span>
                   </div>
 
-                  <h3 className="text-sm font-bold text-slate-800 mt-3 group-hover:text-purple-700 transition-colors">
+                  <h3 className="text-sm font-bold text-slate-800 mt-3 group-hover:text-orange-600 transition-colors">
                     {svc.name}
                   </h3>
                   <p className="text-xs text-slate-400 mt-1">{svc.detail}</p>
@@ -80,9 +80,9 @@ export default function StatusPage() {
 
       {/* Air-gapped Verification Card */}
       <ScrollReveal direction="up" delay={150} duration={600}>
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
               <Lock className="w-6 h-6" />
             </div>
             <div>

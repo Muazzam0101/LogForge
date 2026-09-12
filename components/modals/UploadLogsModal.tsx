@@ -188,17 +188,17 @@ export function UploadLogsModal({ isOpen, onClose }: UploadLogsModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-150">
       <div
-        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden"
+        className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100">
+            <div className="w-10 h-10 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center border border-orange-100">
               <UploadCloud className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-slate-900">
+              <h3 className="text-base font-bold text-slate-900">
                 Upload Log Files
               </h3>
               <p className="text-xs text-slate-400">
@@ -239,11 +239,11 @@ export function UploadLogsModal({ isOpen, onClose }: UploadLogsModalProps) {
               onDrop={handleDrop}
               className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all ${
                 dragOver
-                  ? "border-purple-500 bg-purple-50/50"
-                  : "border-slate-200 hover:border-purple-400 bg-slate-50/50"
+                  ? "border-orange-500 bg-orange-50/50"
+                  : "border-slate-200 hover:border-orange-400 bg-slate-50/50"
               }`}
             >
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-white text-purple-600 shadow-sm border border-purple-100 flex items-center justify-center mb-3">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-white text-orange-600 shadow-sm border border-orange-100 flex items-center justify-center mb-3">
                 <FileCode className="w-7 h-7" />
               </div>
               <h4 className="text-sm font-bold text-slate-800">
@@ -256,7 +256,7 @@ export function UploadLogsModal({ isOpen, onClose }: UploadLogsModalProps) {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-xs cursor-pointer transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold shadow-xs cursor-pointer transition-colors"
               >
                 <UploadCloud className="w-4 h-4" />
                 <span>Browse Local Files</span>
@@ -272,10 +272,10 @@ export function UploadLogsModal({ isOpen, onClose }: UploadLogsModalProps) {
             </div>
           ) : (
             /* Selected File Card */
-            <div className="p-4 rounded-2xl border border-purple-200 bg-purple-50/30 space-y-3">
+            <div className="p-4 rounded-2xl border border-orange-200 bg-orange-50/30 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center">
                     <FileText className="w-4.5 h-4.5" />
                   </div>
                   <div>
@@ -285,11 +285,11 @@ export function UploadLogsModal({ isOpen, onClose }: UploadLogsModalProps) {
                     <div className="flex items-center gap-2 text-[11px] text-slate-500">
                       <span>{selectedFile.sizeKb} KB</span>
                       <span>·</span>
-                      <span className="font-semibold text-purple-700">
+                      <span className="font-semibold text-orange-700">
                         {selectedFile.count} {selectedFile.count === 1 ? "log entry" : "log entries"}
                       </span>
                       {selectedFile.isBatch && (
-                        <span className="px-1.5 py-0.2 rounded-md bg-purple-100 text-purple-700 font-bold text-[10px]">
+                        <span className="px-1.5 py-0.2 rounded-md bg-orange-100 text-orange-700 font-bold text-[10px]">
                           BATCH READY
                         </span>
                       )}
@@ -375,7 +375,7 @@ export function UploadLogsModal({ isOpen, onClose }: UploadLogsModalProps) {
                 type="button"
                 onClick={handleLoadToTerminal}
                 disabled={isSubmitting}
-                className="px-3.5 py-2 rounded-xl text-xs font-semibold border border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors cursor-pointer"
+                className="px-3.5 py-2 rounded-xl text-xs font-semibold border border-orange-200 text-orange-700 bg-orange-50 hover:bg-orange-100 transition-colors cursor-pointer"
               >
                 Load into Terminal
               </button>
@@ -384,7 +384,7 @@ export function UploadLogsModal({ isOpen, onClose }: UploadLogsModalProps) {
             <button
               onClick={selectedFile ? handleProcessNow : () => fileInputRef.current?.click()}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-xl text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white shadow-xs transition-colors disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              className="px-4 py-2 rounded-xl text-xs font-semibold bg-orange-600 hover:bg-orange-700 text-white shadow-xs transition-colors disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
             >
               {isSubmitting ? (
                 <>

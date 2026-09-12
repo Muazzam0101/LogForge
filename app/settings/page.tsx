@@ -13,13 +13,13 @@ export default function SettingsPage() {
     <div className="space-y-6">
       {/* Header */}
       <ScrollReveal direction="up" delay={50} duration={500}>
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold mb-2">
               <SettingsIcon className="w-3.5 h-3.5" />
               <span>Framework Configuration</span>
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
               Platform & Schema Settings
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
@@ -27,7 +27,7 @@ export default function SettingsPage() {
             </p>
           </div>
 
-          <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-xs transition-colors self-start sm:self-auto">
+          <button className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all self-start sm:self-auto cursor-pointer">
             <Save className="w-4 h-4" />
             <span>Save Configuration</span>
           </button>
@@ -36,7 +36,7 @@ export default function SettingsPage() {
 
       {/* Settings Options */}
       <ScrollReveal direction="up" delay={100} duration={600}>
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs divide-y divide-slate-100">
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] divide-y divide-slate-100">
           {/* Setting 1 */}
           <div className="py-4.5 flex items-center justify-between gap-4 first:pt-0">
             <div>
@@ -49,8 +49,8 @@ export default function SettingsPage() {
             </div>
             <button
               onClick={() => setRetentionEnabled(!retentionEnabled)}
-              className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
-                retentionEnabled ? "bg-purple-600" : "bg-slate-200"
+              className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${
+                retentionEnabled ? "bg-orange-600" : "bg-slate-200"
               }`}
             >
               <div
@@ -73,7 +73,7 @@ export default function SettingsPage() {
             </div>
             <button
               onClick={() => setAirGappedMode(!airGappedMode)}
-              className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
+              className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${
                 airGappedMode ? "bg-emerald-600" : "bg-slate-200"
               }`}
             >
@@ -97,8 +97,8 @@ export default function SettingsPage() {
             </div>
             <button
               onClick={() => setAutoDetectFormat(!autoDetectFormat)}
-              className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
-                autoDetectFormat ? "bg-purple-600" : "bg-slate-200"
+              className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${
+                autoDetectFormat ? "bg-orange-600" : "bg-slate-200"
               }`}
             >
               <div
@@ -119,7 +119,7 @@ export default function SettingsPage() {
                 Problem Statement ID: 26156 · National Technical Research Organisation (NTRO) · Theme: Blockchain & Cybersecurity
               </p>
             </div>
-            <span className="text-xs font-mono font-bold text-purple-700 bg-purple-50 px-3 py-1.5 rounded-xl">
+            <span className="text-xs font-mono font-bold text-orange-700 bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-100">
               ULPF Core v1.0
             </span>
           </div>

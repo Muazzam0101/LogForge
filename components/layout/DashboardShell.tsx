@@ -8,6 +8,8 @@ import { UploadLogsModal } from "@/components/modals/UploadLogsModal";
 import { ExplorePipelineModal } from "@/components/modals/ExplorePipelineModal";
 import { AddSourceModal } from "@/components/modals/AddSourceModal";
 
+import { cn } from "@/lib/utils";
+
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const {
@@ -33,15 +35,20 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex overflow-x-hidden">
-      {/* Sidebar with dynamic collapse / close support */}
+    <div className="min-h-screen bg-[#f8fafc] flex">
+      {/* Permanently Fixed Sidebar */}
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
 
-      {/* Main Content Area smoothly expanding when sidebar is closed */}
-      <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out">
+      {/* Main Content Area smoothly offset when sidebar is open */}
+      <div
+        className={cn(
+          "flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out",
+          isSidebarOpen ? "lg:pl-64 xl:pl-[268px]" : "lg:pl-0"
+        )}
+      >
         {/* Sticky Top Bar with Sidebar Toggle */}
         <TopBar
           isSidebarOpen={isSidebarOpen}

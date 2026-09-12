@@ -7,17 +7,20 @@
 
 @layer base {
   :root {
-    --background: #f8fafc;
-    --foreground: #0f172a;
+    --background: #f8f9fb;
+    --foreground: #111827;
     --card: #ffffff;
-    --card-foreground: #0f172a;
-    --border: #e2e8f0;
-    --muted: #f1f5f9;
-    --muted-foreground: #64748b;
-    --brand-primary: #6366f1;
-    --brand-violet: #7048e8;
-    --brand-accent: #8b5cf6;
-    --brand-light: #f5f3ff;
+    --card-foreground: #111827;
+    --border: #edf0f4;
+    --muted: #f4f5f8;
+    --muted-foreground: #6b7280;
+    --brand-primary: #ea384d;
+    --brand-orange: #f95738;
+    --brand-coral: #ff5436;
+    --brand-purple: #6c5ce7;
+    --brand-dark-purple: #31234b;
+    --brand-amber: #f59e0b;
+    --brand-light: #fff5f3;
   }
 
   * {
@@ -25,8 +28,8 @@
   }
 
   body {
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: #f8f9fb;
+    color: #111827;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

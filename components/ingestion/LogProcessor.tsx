@@ -192,13 +192,13 @@ export function LogProcessor({
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-100 p-6 sm:p-7 shadow-xs">
+    <div className="bg-white rounded-2xl border border-slate-100 p-6 sm:p-7 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
       {/* Header & Quick Presets */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-slate-100">
         <div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-base font-bold text-slate-900 tracking-tight">
               Universal Raw Log Ingestion Terminal
             </h2>
           </div>
@@ -218,7 +218,7 @@ export function LogProcessor({
               type="button"
               onClick={() => loadPreset(preset)}
               disabled={isProcessing}
-              className="px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-purple-50 text-slate-600 hover:text-purple-700 text-[11px] font-medium border border-slate-200/80 hover:border-purple-200 transition-colors disabled:opacity-50 cursor-pointer"
+              className="px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-orange-50 text-slate-600 hover:text-orange-700 text-[11px] font-medium border border-slate-200/80 hover:border-orange-200 transition-colors disabled:opacity-50 cursor-pointer"
             >
               {preset.label}
             </button>
@@ -256,11 +256,11 @@ export function LogProcessor({
               htmlFor="raw-log-input"
               className="text-xs font-bold text-slate-700 uppercase tracking-wider"
             >
-              Raw Event Payload <span className="text-purple-600">*</span>
+              Raw Event Payload <span className="text-orange-600">*</span>
             </label>
             <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
               {extractedInfo.totalCount > 1 && (
-                <span className="px-2 py-0.5 rounded-md bg-purple-100 text-purple-700 font-sans font-bold text-[10px]">
+                <span className="px-2 py-0.5 rounded-md bg-orange-100 text-orange-700 font-sans font-bold text-[10px]">
                   {extractedInfo.totalCount} Log Entries (Batch Ready)
                 </span>
               )}
@@ -279,8 +279,8 @@ export function LogProcessor({
             onDrop={handleFileDrop}
             className={`relative rounded-2xl border transition-all ${
               dragActive
-                ? "border-purple-500 ring-4 ring-purple-500/10 bg-purple-50/20"
-                : "border-slate-200 hover:border-purple-300 focus-within:border-purple-500 focus-within:ring-4 focus-within:ring-purple-500/10"
+                ? "border-orange-500 ring-4 ring-orange-500/10 bg-orange-50/20"
+                : "border-slate-200 hover:border-orange-300 focus-within:border-orange-500 focus-within:ring-4 focus-within:ring-orange-500/10"
             }`}
           >
             <textarea
@@ -314,7 +314,7 @@ export function LogProcessor({
               onChange={(e) => setSourceHint(e.target.value)}
               placeholder="e.g. cisco_asa, checkpoint_fw (optional)"
               disabled={isProcessing}
-              className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200/80 rounded-xl text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-purple-400 focus:bg-white transition-colors"
+              className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200/80 rounded-xl text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:bg-white transition-colors"
             />
           </div>
 
@@ -333,7 +333,7 @@ export function LogProcessor({
             <button
               type="submit"
               disabled={!rawLog.trim() || isProcessing}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold shadow-sm shadow-purple-500/25 hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
+              className="px-6 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
             >
               {isProcessing ? (
                 <>

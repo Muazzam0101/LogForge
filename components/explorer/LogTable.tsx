@@ -120,7 +120,7 @@ export function LogTable({ events, isLoading, onInspectEvent }: LogTableProps) {
               <tr
                 key={evt.event_id}
                 onClick={() => onInspectEvent(evt.event_id)}
-                className="hover:bg-purple-50/25 transition-colors group cursor-pointer"
+                className="hover:bg-orange-50/20 transition-colors group cursor-pointer"
               >
                 {/* 1. Timestamp */}
                 <td className="py-3.5 px-4 text-slate-500 font-sans text-xs whitespace-nowrap">
@@ -137,14 +137,14 @@ export function LogTable({ events, isLoading, onInspectEvent }: LogTableProps) {
 
                 {/* 2. Event ID (with quick copy) */}
                 <td className="py-3.5 px-4 font-bold text-slate-800 whitespace-nowrap">
-                  <div className="inline-flex items-center gap-1.5 bg-purple-50/80 px-2 py-0.5 rounded-md border border-purple-100/70">
-                    <span className="font-mono text-[11px] text-purple-700">
+                  <div className="inline-flex items-center gap-1.5 bg-orange-50/70 px-2 py-0.5 rounded-md border border-orange-200/60">
+                    <span className="font-mono text-[11px] text-orange-700">
                       {evt.event_id.slice(0, 8)}...{evt.event_id.slice(-4)}
                     </span>
                     <button
                       type="button"
                       onClick={(e) => handleCopyId(e, evt.event_id)}
-                      className="text-purple-400 hover:text-purple-700 cursor-pointer"
+                      className="text-orange-400 hover:text-orange-700 cursor-pointer"
                       title="Copy full UUID"
                     >
                       {copiedId === evt.event_id ? (
@@ -232,7 +232,7 @@ export function LogTable({ events, isLoading, onInspectEvent }: LogTableProps) {
                       e.stopPropagation();
                       onInspectEvent(evt.event_id);
                     }}
-                    className="px-2.5 py-1 text-[11px] font-semibold text-purple-700 hover:text-white bg-purple-50 hover:bg-purple-600 rounded-lg transition-colors border border-purple-200 hover:border-purple-600 inline-flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1 text-[11px] font-semibold text-orange-700 hover:text-white bg-orange-50 hover:bg-orange-600 rounded-lg transition-colors border border-orange-200 hover:border-orange-600 inline-flex items-center gap-1 cursor-pointer"
                   >
                     <Eye className="w-3 h-3" />
                     <span>Inspect</span>

@@ -1,93 +1,177 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import {
-  LayoutDashboard,
-  ArrowDownToLine,
-  Search,
-  Sliders,
-  ShieldAlert,
-  AlertTriangle,
-  Layers,
-  FileText,
-  Server,
+  FileSearch,
+  Package,
+  Brain,
+  BarChart3,
+  FileBarChart,
+  ShieldCheck,
+  CirclePlus,
   Settings,
-  Shield,
 } from "lucide-react";
 import { LogForgeLogo } from "@/components/ui/LogForgeLogo";
 import { cn } from "@/lib/utils";
-
-export type NavItemKey =
-  | "dashboard"
-  | "ingestion"
-  | "explorer"
-  | "sources"
-  | "threats"
-  | "alerts"
-  | "integrations"
-  | "reports"
-  | "status"
-  | "settings";
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-interface NavSection {
-  title: string;
-  items: {
-    href: string;
-    label: string;
-    icon: React.ComponentType<{ className?: string }>;
-    badge?: string;
-  }[];
+// Custom Dashboard Icon matching the reference image's warm coral home/screen emblem
+function DashboardIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path
+        d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+        fill="currentColor"
+        fillOpacity="0.15"
+      />
+      <path d="M9 22V12h6v10" />
+      <circle cx="12" cy="7" r="1" fill="currentColor" />
+    </svg>
+  );
 }
 
-const navSections: NavSection[] = [
-  {
-    title: "OVERVIEW",
-    items: [
-      { href: "/", label: "Dashboard", icon: LayoutDashboard },
-    ],
-  },
-  {
-    title: "LOG OPERATIONS",
-    items: [
-      { href: "/ingestion", label: "Log Ingestion", icon: ArrowDownToLine },
-      { href: "/explorer", label: "Logs Explorer", icon: Search },
-      { href: "/sources", label: "Sources & Parsers", icon: Sliders },
-    ],
-  },
-  {
-    title: "SECURITY",
-    items: [
-      { href: "/threats", label: "Threat Analytics", icon: ShieldAlert },
-      { href: "/alerts", label: "Security Alerts", icon: AlertTriangle },
-    ],
-  },
-  {
-    title: "PLATFORM",
-    items: [
-      { href: "/integrations", label: "Integrations", icon: Layers },
-      { href: "/reports", label: "Reports", icon: FileText },
-      { href: "/status", label: "System Status", icon: Server },
-    ],
-  },
-  {
-    title: "SETTINGS",
-    items: [
-      { href: "/settings", label: "Settings", icon: Settings },
-    ],
-  },
+interface NavItemDef {
+  id: string;
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+const navItems: NavItemDef[] = [
+  { id: "dashboard", href: "/", label: "Dashboard", icon: DashboardIcon },
+  { id: "explorer", href: "/explorer", label: "Logs Explorer", icon: FileSearch },
+  { id: "ingestion", href: "/ingestion", label: "Log Ingestion", icon: Package },
+  { id: "anomalies", href: "/anomalies", label: "AI Anomalies", icon: Brain },
+  { id: "analytics", href: "/sources", label: "Analytics", icon: BarChart3 },
+  { id: "reports", href: "/reports", label: "Reports", icon: FileBarChart },
+  { id: "integrity", href: "/alerts", label: "Data Integrity", icon: ShieldCheck },
+  { id: "health", href: "/status", label: "System Health", icon: CirclePlus },
+  { id: "settings", href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+function NavList({ onClose }: { onClose: () => void }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const minAnomalyScore = searchParams.get("min_anomaly_score");
 
-  // Prevent background scrolling on mobile when sidebar menu is open
+  // Determine strictly ONE active item ID
+  const getActiveId = (): string => {
+    if (!pathname || pathname === "/") return "dashboard";
+    if (pathname.startsWith("/anomalies")) return "anomalies";
+
+    if (pathname === "/explorer") {
+      if (minAnomalyScore && parseFloat(minAnomalyScore) >= 0.4) {
+        return "anomalies";
+      }
+      return "explorer";
+    }
+
+    if (pathname.startsWith("/ingestion")) return "ingestion";
+    if (pathname.startsWith("/sources") || pathname.startsWith("/threats")) return "analytics";
+    if (pathname.startsWith("/reports")) return "reports";
+    if (pathname.startsWith("/alerts")) return "integrity";
+    if (pathname.startsWith("/status")) return "health";
+    if (pathname.startsWith("/settings")) return "settings";
+
+    return "";
+  };
+
+  const activeId = getActiveId();
+
+  return (
+    <nav className="space-y-1 relative px-3 sm:px-3.5">
+      {navItems.map((item) => {
+        const Icon = item.icon;
+        const isActive = item.id === activeId;
+
+        return (
+          <div key={item.id} className="relative">
+            {/* Left indicator tab (strictly for active item) */}
+            {isActive && (
+              <span className="absolute -left-3 sm:-left-3.5 top-1/2 -translate-y-1/2 w-1.5 h-7 bg-[#ea384d] rounded-r-md z-20 shadow-[0_0_8px_rgba(234,56,77,0.4)]" />
+            )}
+
+            <Link
+              href={item.href}
+              onClick={() => {
+                if (typeof window !== "undefined" && window.innerWidth < 1024) onClose();
+              }}
+              className={cn(
+                "w-full flex items-center gap-3.5 px-3.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-[13px] sm:text-[13.5px] transition-all duration-150 group cursor-pointer relative",
+                isActive
+                  ? "bg-[#fdeeed] text-[#0f172a] font-bold shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
+                  : "text-[#334155] hover:text-[#0f172a] hover:bg-slate-100/60 font-semibold"
+              )}
+            >
+              <Icon
+                className={cn(
+                  "w-5 h-5 shrink-0 transition-colors",
+                  isActive
+                    ? "text-[#ea384d] stroke-[2.2]"
+                    : "text-[#475569] group-hover:text-[#0f172a] stroke-[1.8]"
+                )}
+              />
+              <span className="truncate tracking-tight leading-none">{item.label}</span>
+            </Link>
+          </div>
+        );
+      })}
+    </nav>
+  );
+}
+
+function NavListFallback() {
+  return (
+    <nav className="space-y-1 relative px-3 sm:px-3.5">
+      {navItems.map((item) => {
+        const Icon = item.icon;
+        const isDashboard = item.id === "dashboard";
+
+        return (
+          <div key={item.id} className="relative">
+            {isDashboard && (
+              <span className="absolute -left-3 sm:-left-3.5 top-1/2 -translate-y-1/2 w-1.5 h-7 bg-[#ea384d] rounded-r-md z-20" />
+            )}
+            <div
+              className={cn(
+                "w-full flex items-center gap-3.5 px-3.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-[13px] sm:text-[13.5px]",
+                isDashboard
+                  ? "bg-[#fdeeed] text-[#0f172a] font-bold"
+                  : "text-[#334155] font-semibold"
+              )}
+            >
+              <Icon
+                className={cn(
+                  "w-5 h-5 shrink-0",
+                  isDashboard ? "text-[#ea384d]" : "text-[#475569]"
+                )}
+              />
+              <span className="truncate tracking-tight leading-none">{item.label}</span>
+            </div>
+          </div>
+        );
+      })}
+    </nav>
+  );
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  // Prevent background scrolling on mobile when open
   React.useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -117,7 +201,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile backdrop with scroll prevention */}
+      {/* Mobile backdrop */}
       {isOpen && (
         <div
           className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-xs lg:hidden transition-opacity"
@@ -126,97 +210,68 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         />
       )}
 
+      {/* Permanently Fixed Sidebar (100vh height, fixed top-0 bottom-0 left-0, never scrolls with page) */}
       <aside
         className={cn(
-          "fixed top-0 bottom-0 left-0 z-50 bg-white border-r border-slate-100 flex flex-col justify-between transition-all duration-300 ease-in-out lg:static lg:z-auto shrink-0",
+          "fixed top-0 bottom-0 left-0 z-40 bg-[#fafbfe] border-r border-[#edf0f4] flex flex-col justify-between transition-all duration-300 ease-in-out select-none overflow-hidden w-64 xl:w-[268px]",
           isOpen
-            ? "w-64 translate-x-0 opacity-100"
-            : "w-0 -translate-x-full lg:w-0 opacity-0 overflow-hidden pointer-events-none border-transparent"
+            ? "translate-x-0 opacity-100"
+            : "-translate-x-full opacity-0 pointer-events-none"
         )}
+        style={{ height: "100vh", maxHeight: "100vh" }}
       >
-        <div className="flex flex-col h-full overflow-y-auto overscroll-contain px-4 py-5 w-64">
-          {/* Logo and Brand Header */}
-          <div className="px-2 mb-6">
-            <Link
-              href="/"
-              onClick={() => {
-                if (typeof window !== "undefined" && window.innerWidth < 1024) onClose();
-              }}
-              className="flex items-center gap-3 group"
-            >
-              <LogForgeLogo size={42} showWordmark={true} />
-            </Link>
+        {/* Unified Scroll Container (If screen is very short, everything scrolls together smoothly so items never slide under graphic) */}
+        <div className="flex-1 flex flex-col justify-between h-full overflow-y-auto overflow-x-hidden no-scrollbar">
+          {/* Top Section: Brand Header + Navigation Items */}
+          <div className="shrink-0 pt-5 pb-2">
+            {/* Logo and Brand Header */}
+            <div className="px-5 mb-5 shrink-0">
+              <Link
+                href="/"
+                onClick={() => {
+                  if (typeof window !== "undefined" && window.innerWidth < 1024) onClose();
+                }}
+                className="flex items-center gap-3 group"
+              >
+                <LogForgeLogo size={36} showWordmark={true} />
+              </Link>
+            </div>
+
+            {/* Navigation Items */}
+            <div>
+              <Suspense fallback={<NavListFallback />}>
+                <NavList onClose={onClose} />
+              </Suspense>
+            </div>
           </div>
 
-          {/* Navigation Items with Real Next.js Links */}
-          <nav className="space-y-5 flex-1">
-            {navSections.map((section) => (
-              <div key={section.title} className="space-y-1">
-                <div className="px-3 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
-                  {section.title}
-                </div>
-                <div className="space-y-0.5">
-                  {section.items.map((item) => {
-                    const Icon = item.icon;
-                    const isActive =
-                      item.href === "/"
-                        ? pathname === "/"
-                        : pathname === item.href || pathname.startsWith(item.href + "/");
+          {/* Bottom Section: Full-Bleed Cyber Graphic */}
+          <div className="relative w-full h-[220px] sm:h-[240px] xl:h-[280px] shrink-0 overflow-hidden mt-auto">
+            {/* Background Illustration */}
+            <Image
+              src="/images/sidebar-secure-banner.jpg"
+              alt="Secure Analyze Stay Ahead Cyber Infrastructure"
+              fill
+              className="object-cover object-top pointer-events-none select-none"
+              priority
+            />
 
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => {
-                          if (typeof window !== "undefined" && window.innerWidth < 1024) onClose();
-                        }}
-                        className={cn(
-                          "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group relative",
-                          isActive
-                            ? "bg-purple-50/80 text-purple-700 font-semibold shadow-xs"
-                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                        )}
-                      >
-                        {isActive && (
-                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-purple-600 rounded-r-full" />
-                        )}
-                        <Icon
-                          className={cn(
-                            "w-4.5 h-4.5 transition-colors",
-                            isActive
-                              ? "text-purple-600 stroke-[2.2]"
-                              : "text-slate-400 group-hover:text-slate-600"
-                          )}
-                        />
-                        <span className="truncate">{item.label}</span>
-                        {item.badge && (
-                          <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
-                            {item.badge}
-                          </span>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
+            {/* Top smooth gradient fade into the light sidebar background */}
+            <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-[#fafbfe] via-[#fafbfe]/70 to-transparent pointer-events-none" />
+
+            {/* Bottom vignette for crisp typography */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
+
+            {/* Text Overlay: Elevated slightly so browser URL tooltip doesn't overlap */}
+            <div className="absolute bottom-6 left-5 z-10 space-y-0.5 select-none pointer-events-none">
+              <div className="text-[13px] font-black tracking-widest text-slate-100 leading-tight drop-shadow-sm">
+                SECURE
               </div>
-            ))}
-          </nav>
-
-          {/* Bottom Security / SIH Badge Card */}
-          <div className="mt-6 pt-4 border-t border-slate-100">
-            <div className="p-3.5 rounded-2xl bg-gradient-to-b from-purple-50/70 to-indigo-50/50 border border-purple-100/70 shadow-xs hover:border-purple-200 transition-colors">
-              <div className="flex items-start gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 shrink-0 mt-0.5">
-                  <Shield className="w-4 h-4 fill-purple-200 stroke-purple-600" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-slate-800 leading-snug">
-                    Secure. Standardized. Intelligent.
-                  </h4>
-                  <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-                    Built for NTRO Universal Log Pre-processing Framework · SIH 2026.
-                  </p>
-                </div>
+              <div className="text-[13px] font-black tracking-widest text-slate-100 leading-tight drop-shadow-sm">
+                ANALYZE
+              </div>
+              <div className="text-[13px] font-black tracking-widest text-slate-100 leading-tight drop-shadow-sm">
+                STAY AHEAD
               </div>
             </div>
           </div>

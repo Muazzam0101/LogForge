@@ -12,8 +12,8 @@ const parsersCatalog = [
     type: "Firewall & Security Appliance",
     desc: "Extracts connection drops, NAT translations, VPN tunnels, and threat events.",
     badge: "Deterministic",
-    color: "text-purple-600",
-    bg: "bg-purple-50",
+    color: "text-orange-600",
+    bg: "bg-orange-50",
   },
   {
     name: "Linux Auditd & Syslog",
@@ -69,13 +69,13 @@ export function SourcesPage() {
     <div className="space-y-6">
       {/* Header */}
       <ScrollReveal direction="up" delay={50} duration={500}>
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-purple-50 border border-purple-100 text-purple-700 text-xs font-semibold mb-2">
+            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-orange-50 border border-orange-100 text-orange-700 text-xs font-semibold mb-2">
               <Sliders className="w-3.5 h-3.5" />
               <span>Plug-and-Play Parser Engine</span>
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
               Sources & Parsers
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
@@ -85,7 +85,7 @@ export function SourcesPage() {
 
           <button
             onClick={openAddSourceModal}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all active:scale-95 shrink-0"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all active:scale-95 shrink-0 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Connect Log Source</span>
@@ -100,7 +100,7 @@ export function SourcesPage() {
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
               Built-in Parser Library
             </h2>
-            <span className="text-[11px] font-semibold text-purple-600">
+            <span className="text-[11px] font-semibold text-orange-600">
               Deterministic Grammar Rules
             </span>
           </div>
@@ -109,7 +109,7 @@ export function SourcesPage() {
             {parsersCatalog.map((parser) => (
               <div
                 key={parser.name}
-                className="group bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:border-purple-200/80 hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
+                className="group bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:border-orange-200/80 hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2">
@@ -120,7 +120,7 @@ export function SourcesPage() {
                       {parser.badge}
                     </span>
                   </div>
-                  <h3 className="text-sm font-bold text-slate-800 mt-3 group-hover:text-purple-700 transition-colors">
+                  <h3 className="text-sm font-bold text-slate-800 mt-3 group-hover:text-orange-600 transition-colors">
                     {parser.name}
                   </h3>
                   <p className="text-[11px] font-medium text-slate-400 mt-0.5">{parser.type}</p>
@@ -144,7 +144,7 @@ export function SourcesPage() {
 
       {/* Connected Sources Matrix with Empty State */}
       <ScrollReveal direction="up" delay={150} duration={600}>
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs">
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-sm font-bold text-slate-800">
@@ -164,12 +164,12 @@ export function SourcesPage() {
             <h3 className="text-sm font-bold text-slate-800">
               No log sources connected
             </h3>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1 mb-4">
+            <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1 mb-4 leading-relaxed">
               Onboard a firewall, server, or container log stream to begin normalized data ingestion.
             </p>
             <button
               onClick={openAddSourceModal}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-semibold border border-purple-200 transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-semibold border border-orange-200 transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Connect First Device</span>

@@ -40,13 +40,13 @@ export function LogToolbar({
   return (
     <div className="space-y-4">
       {/* Top Header Card */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-orange-50 border border-orange-200/70 text-orange-700 text-xs font-semibold mb-2">
             <Database className="w-3.5 h-3.5" />
             <span>MySQL Persistent Log Repository</span>
           </div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
             Logs Explorer
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
@@ -67,7 +67,7 @@ export function LogToolbar({
           <button
             onClick={onRefresh}
             disabled={isLoading}
-            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
             title="Refresh logs from MySQL"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
@@ -76,7 +76,7 @@ export function LogToolbar({
 
           <button
             onClick={onOpenUpload}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
           >
             <span>Upload Logs</span>
           </button>
@@ -84,7 +84,7 @@ export function LogToolbar({
       </div>
 
       {/* Search Bar & Filter Toggle Bar */}
-      <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs">
+      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
         <form onSubmit={onSearchSubmit} className="flex flex-col sm:flex-row items-stretch gap-2.5">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -95,7 +95,7 @@ export function LogToolbar({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search across Event ID, IP, protocol, action, format, raw payload..."
-              className="w-full pl-10 pr-10 py-3 bg-slate-50/90 hover:bg-slate-50 focus:bg-white text-xs sm:text-sm font-mono text-slate-800 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all shadow-2xs"
+              className="w-full pl-10 pr-10 py-2.5 bg-slate-50/90 hover:bg-slate-50 focus:bg-white text-xs sm:text-sm font-mono text-slate-800 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 transition-all"
             />
             {searchQuery && (
               <button
@@ -111,7 +111,7 @@ export function LogToolbar({
           <button
             type="submit"
             disabled={isLoading}
-            className="px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white text-xs sm:text-sm font-semibold rounded-2xl shadow-xs transition-all active:scale-95 shrink-0 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+            className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-all active:scale-95 shrink-0 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
           >
             <Search className="w-4 h-4" />
             <span>Search</span>
@@ -120,16 +120,16 @@ export function LogToolbar({
           <button
             type="button"
             onClick={onToggleFilters}
-            className={`px-4 py-3 rounded-2xl border text-xs sm:text-sm font-semibold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer ${
+            className={`px-4 py-2.5 rounded-xl border text-xs sm:text-sm font-semibold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer ${
               isFiltersOpen || activeFilterCount > 0
-                ? "bg-purple-50 border-purple-200 text-purple-700"
+                ? "bg-orange-50 border-orange-200 text-orange-700"
                 : "border-slate-200 hover:bg-slate-50 text-slate-700"
             }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
             <span>Filters</span>
             {activeFilterCount > 0 && (
-              <span className="w-5 h-5 rounded-full bg-purple-600 text-white text-[11px] font-bold flex items-center justify-center">
+              <span className="w-5 h-5 rounded-full bg-orange-600 text-white text-[11px] font-bold flex items-center justify-center">
                 {activeFilterCount}
               </span>
             )}

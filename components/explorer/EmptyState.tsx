@@ -32,7 +32,7 @@ export function EmptyState({
           <button
             type="button"
             onClick={onClearFilters}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-semibold border border-purple-200 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-semibold border border-orange-200 transition-colors cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset All Filters</span>
@@ -49,7 +49,7 @@ export function EmptyState({
         <Terminal className="w-7 h-7 stroke-[1.8]" />
       </div>
       <div className="space-y-1">
-        <h3 className="text-base font-extrabold text-slate-800">
+        <h3 className="text-base font-bold text-slate-900">
           No events processed yet.
         </h3>
         <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
@@ -60,7 +60,7 @@ export function EmptyState({
         <button
           type="button"
           onClick={onOpenUpload}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
         >
           <ArrowDownToLine className="w-3.5 h-3.5" />
           <span>Upload Logs to Ingest</span>

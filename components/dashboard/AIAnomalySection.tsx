@@ -100,7 +100,7 @@ export function AIAnomalySection({ onEventSelect }: AIAnomalySectionProps) {
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
         <div className="flex items-start gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0 text-purple-600 shadow-xs">
+          <div className="w-11 h-11 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0 text-orange-600 shadow-xs">
             <Brain className="w-5 h-5" />
           </div>
           <div>
@@ -130,7 +130,7 @@ export function AIAnomalySection({ onEventSelect }: AIAnomalySectionProps) {
           <button
             onClick={handleRetrain}
             disabled={isTraining}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 transition-all shadow-xs cursor-pointer"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50 transition-all shadow-xs cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isTraining ? "animate-spin" : ""}`} />
             <span>{isTraining ? "Calibrating Model..." : "Retrain Model"}</span>
@@ -255,7 +255,7 @@ export function AIAnomalySection({ onEventSelect }: AIAnomalySectionProps) {
               </div>
               <Link
                 href="/explorer"
-                className="text-xs font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                className="text-xs font-semibold text-orange-600 hover:text-orange-700 flex items-center gap-1"
               >
                 <span>Filter</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -292,7 +292,7 @@ export function AIAnomalySection({ onEventSelect }: AIAnomalySectionProps) {
                         <td className="py-2.5 px-3 font-mono text-[11px] font-medium text-slate-800">
                           <Link
                             href={`/explorer?source_ip=${encodeURIComponent(src.source_ip)}`}
-                            className="hover:text-purple-600 transition-colors"
+                            className="hover:text-orange-600 transition-colors"
                           >
                             {src.source_ip}
                           </Link>
@@ -338,10 +338,10 @@ export function AIAnomalySection({ onEventSelect }: AIAnomalySectionProps) {
                 </p>
               </div>
               <Link
-                href="/explorer"
-                className="text-xs font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                href="/anomalies"
+                className="text-xs font-semibold text-orange-600 hover:text-orange-700 flex items-center gap-1"
               >
-                <span>View in Explorer</span>
+                <span>View in AI Anomalies</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -363,7 +363,7 @@ export function AIAnomalySection({ onEventSelect }: AIAnomalySectionProps) {
                   <div
                     key={item.event_id}
                     onClick={() => onEventSelect && onEventSelect(item.event_id)}
-                    className="bg-white rounded-xl p-3.5 border border-slate-100 hover:border-purple-200 hover:shadow-xs transition-all cursor-pointer group"
+                    className="bg-white rounded-xl p-3.5 border border-slate-100 hover:border-orange-200 hover:shadow-xs transition-all cursor-pointer group"
                   >
                     <div className="flex items-center justify-between gap-2 mb-1.5">
                       <div className="flex items-center gap-2 font-mono text-[11px] text-slate-700 font-semibold">
@@ -399,7 +399,7 @@ export function AIAnomalySection({ onEventSelect }: AIAnomalySectionProps) {
 
                     <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-50">
                       <span>{new Date(item.created_at).toLocaleTimeString()}</span>
-                      <span className="group-hover:text-purple-600 transition-colors flex items-center gap-0.5 font-medium">
+                      <span className="group-hover:text-orange-600 transition-colors flex items-center gap-0.5 font-medium">
                         Inspect event details <ArrowRight className="w-2.5 h-2.5" />
                       </span>
                     </div>

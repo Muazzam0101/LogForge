@@ -9,13 +9,13 @@ export default function ReportsPage() {
     <div className="space-y-6">
       {/* Header */}
       <ScrollReveal direction="up" delay={50} duration={500}>
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold mb-2">
+            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-orange-50 border border-orange-100 text-orange-700 text-xs font-semibold mb-2">
               <ShieldCheck className="w-3.5 h-3.5" />
               <span>Cryptographic Forensic Verification</span>
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
               Audit & Forensic Reports
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
@@ -24,7 +24,7 @@ export default function ReportsPage() {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <button className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-xs transition-colors">
+            <button className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all cursor-pointer">
               <FileText className="w-4 h-4" />
               <span>Generate New Report</span>
             </button>
@@ -57,13 +57,13 @@ export default function ReportsPage() {
           ].map((rep) => (
             <div
               key={rep.title}
-              className="group bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:border-purple-200/80 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between"
+              className="group bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:border-orange-200/80 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between"
             >
               <div>
-                <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded">
                   {rep.badge}
                 </span>
-                <h3 className="text-sm font-bold text-slate-900 mt-3 group-hover:text-purple-700 transition-colors">
+                <h3 className="text-sm font-bold text-slate-900 mt-3 group-hover:text-orange-600 transition-colors">
                   {rep.title}
                 </h3>
                 <p className="text-xs text-slate-400 mt-1 leading-relaxed">{rep.desc}</p>
@@ -71,7 +71,7 @@ export default function ReportsPage() {
 
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
                 <span className="text-slate-400">Format: {rep.format}</span>
-                <span className="font-semibold text-purple-600 cursor-pointer hover:underline">
+                <span className="font-semibold text-orange-600 cursor-pointer hover:underline">
                   Download Template
                 </span>
               </div>
@@ -82,7 +82,7 @@ export default function ReportsPage() {
 
       {/* Generated Reports List / Empty State */}
       <ScrollReveal direction="up" delay={150} duration={600}>
-        <div className="bg-white rounded-3xl p-12 border border-slate-100 shadow-xs text-center">
+        <div className="bg-white rounded-2xl p-12 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] text-center">
           <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 animate-calm-pulse">
             <FileText className="w-6 h-6" />
           </div>

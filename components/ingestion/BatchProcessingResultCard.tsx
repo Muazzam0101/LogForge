@@ -54,7 +54,7 @@ export function BatchProcessingResultCard({
   return (
     <div className="space-y-6">
       {/* Batch Overview Header Card */}
-      <div className="rounded-3xl bg-white border border-slate-100 p-6 sm:p-7 shadow-xs">
+      <div className="rounded-2xl bg-white border border-slate-100 p-6 sm:p-7 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
@@ -81,7 +81,7 @@ export function BatchProcessingResultCard({
               </span>
             </div>
 
-            <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">
               Batch Ingestion Telemetry · {batchResult.total} Events
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -118,7 +118,7 @@ export function BatchProcessingResultCard({
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
               Total Processed
             </span>
-            <span className="text-xl font-extrabold text-slate-900 font-mono mt-0.5 block">
+            <span className="text-xl font-bold text-slate-900 font-mono mt-0.5 block">
               {batchResult.total}
             </span>
           </div>
@@ -127,7 +127,7 @@ export function BatchProcessingResultCard({
             <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider block">
               Successful Normalization
             </span>
-            <span className="text-xl font-extrabold text-emerald-700 font-mono mt-0.5 block">
+            <span className="text-xl font-bold text-emerald-700 font-mono mt-0.5 block">
               {batchResult.successful}
             </span>
           </div>
@@ -136,16 +136,16 @@ export function BatchProcessingResultCard({
             <span className="text-[11px] font-semibold text-rose-700 uppercase tracking-wider block">
               Failed / Malformed
             </span>
-            <span className="text-xl font-extrabold text-rose-700 font-mono mt-0.5 block">
+            <span className="text-xl font-bold text-rose-700 font-mono mt-0.5 block">
               {batchResult.failed}
             </span>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-purple-50/60 border border-purple-100">
-            <span className="text-[11px] font-semibold text-purple-700 uppercase tracking-wider block">
+          <div className="p-3.5 rounded-2xl bg-orange-50/60 border border-orange-100">
+            <span className="text-[11px] font-semibold text-orange-700 uppercase tracking-wider block">
               Avg Latency / Event
             </span>
-            <span className="text-xl font-extrabold text-purple-700 font-mono mt-0.5 block">
+            <span className="text-xl font-bold text-orange-700 font-mono mt-0.5 block">
               {batchResult.total > 0
                 ? (totalProcessingTime / batchResult.total).toFixed(3)
                 : 0}{" "}
@@ -160,7 +160,7 @@ export function BatchProcessingResultCard({
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Select an Event to Inspect Cryptographic Traceability
             </h3>
-            <span className="text-xs text-purple-600 font-semibold">
+            <span className="text-xs text-orange-600 font-semibold">
               Showing item {results.length > 0 ? selectedIndex + 1 : 0} of {results.length}
             </span>
           </div>
@@ -183,7 +183,7 @@ export function BatchProcessingResultCard({
                     onClick={() => setSelectedIndex(index)}
                     className={`flex items-center justify-between p-3.5 text-xs transition-colors cursor-pointer ${
                       isSelected
-                        ? "bg-purple-50/80 border-l-4 border-l-purple-600"
+                        ? "bg-orange-50/80 border-l-4 border-l-orange-600"
                         : "hover:bg-slate-50/80 bg-white"
                     }`}
                   >
@@ -215,11 +215,11 @@ export function BatchProcessingResultCard({
 
                     <div className="flex items-center gap-4 shrink-0 pl-3">
                       <div className="hidden md:flex items-center gap-1.5 text-slate-400 font-mono text-[11px]">
-                        <Hash className="w-3 h-3 text-purple-600" />
+                        <Hash className="w-3 h-3 text-orange-600" />
                         <span>{hashPreview}</span>
                       </div>
 
-                      <div className="flex items-center gap-1 font-semibold text-purple-600">
+                      <div className="flex items-center gap-1 font-semibold text-orange-600">
                         <span>{isSelected ? "Inspecting" : "Inspect"}</span>
                         <ChevronRight className="w-3.5 h-3.5" />
                       </div>

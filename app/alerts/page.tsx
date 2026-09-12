@@ -13,13 +13,13 @@ export default function AlertsPage() {
     <div className="space-y-6">
       {/* Header */}
       <ScrollReveal direction="up" delay={50} duration={500}>
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-rose-50 border border-rose-100 text-rose-700 text-xs font-semibold mb-2">
               <AlertTriangle className="w-3.5 h-3.5" />
               <span>Real-Time Incident Triage</span>
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
               Security Alerts
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
@@ -49,9 +49,9 @@ export default function AlertsPage() {
             <button
               key={tab.id}
               onClick={() => setSelectedSeverity(tab.id as any)}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                 selectedSeverity === tab.id
-                  ? "bg-purple-600 text-white shadow-xs"
+                  ? "bg-orange-600 text-white shadow-xs"
                   : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80"
               }`}
             >
@@ -70,7 +70,7 @@ export default function AlertsPage() {
 
       {/* Incident Queue Table */}
       <ScrollReveal direction="up" delay={150} duration={600}>
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs">
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
           <div className="w-full overflow-hidden rounded-2xl border border-slate-100">
             <table className="w-full text-left text-xs">
               <thead>
@@ -98,7 +98,7 @@ export default function AlertsPage() {
                       </p>
                       <button
                         onClick={openUploadModal}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-semibold border border-purple-200 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-semibold border border-orange-200 transition-colors cursor-pointer"
                       >
                         <span>Simulate Alert Ingestion</span>
                       </button>

@@ -21,13 +21,13 @@ export default function ThreatsPage() {
     <div className="space-y-6">
       {/* Header */}
       <ScrollReveal direction="up" delay={50} duration={500}>
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-rose-50 border border-rose-100 text-rose-700 text-xs font-semibold mb-2">
               <ShieldAlert className="w-3.5 h-3.5" />
               <span>AI/ML Threat Intelligence Matrix</span>
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
               Threat Analytics
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
@@ -58,18 +58,18 @@ export default function ThreatsPage() {
             {mitreTactics.map((tac) => (
               <div
                 key={tac.id}
-                className="group bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:border-purple-200 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between"
+                className="group bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:border-orange-200 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded">
+                    <span className="text-[10px] font-mono font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded">
                       {tac.id}
                     </span>
                     <span className="text-[11px] text-slate-400 font-medium">
                       {tac.rules}
                     </span>
                   </div>
-                  <h3 className="text-sm font-bold text-slate-800 mt-3 group-hover:text-purple-700 transition-colors">
+                  <h3 className="text-sm font-bold text-slate-800 mt-3 group-hover:text-orange-600 transition-colors">
                     {tac.name}
                   </h3>
                   <p className="text-xs text-slate-400 mt-1 leading-relaxed">
@@ -89,10 +89,10 @@ export default function ThreatsPage() {
 
       {/* Threat Engine Standby Box */}
       <ScrollReveal direction="up" delay={150} duration={600}>
-        <div className="bg-white rounded-3xl p-12 border border-slate-100 shadow-xs text-center">
+        <div className="bg-white rounded-2xl p-12 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] text-center">
           <div className="relative flex items-center justify-center mb-4">
-            <span className="absolute w-14 h-14 rounded-2xl bg-purple-100/50 animate-radar-ring pointer-events-none" />
-            <div className="relative w-14 h-14 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shadow-xs">
+            <span className="absolute w-14 h-14 rounded-2xl bg-orange-100/50 animate-radar-ring pointer-events-none" />
+            <div className="relative w-14 h-14 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center shadow-xs">
               <Brain className="w-7 h-7 stroke-[1.8]" />
             </div>
           </div>
@@ -104,7 +104,7 @@ export default function ThreatsPage() {
           </p>
           <button
             onClick={openUploadModal}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-xs transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
           >
             <span>Upload Logs to Analyze</span>
           </button>

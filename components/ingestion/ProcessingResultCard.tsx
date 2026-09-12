@@ -69,12 +69,12 @@ export function ProcessingResultCard({ result }: ProcessingResultCardProps) {
       case "reject":
         return "bg-rose-50 text-rose-700 border-rose-200";
       default:
-        return "bg-purple-50 text-purple-700 border-purple-200";
+        return "bg-orange-50 text-orange-700 border-orange-200";
     }
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-100 p-6 sm:p-7 shadow-xs space-y-6">
+    <div className="bg-white rounded-2xl border border-slate-100 p-6 sm:p-7 shadow-[0_2px_10px_rgba(0,0,0,0.02)] space-y-6">
       {/* Top Banner: Status, Format, Latency & View Toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
         <div className="flex items-center gap-3 flex-wrap">
@@ -95,15 +95,15 @@ export function ProcessingResultCard({ result }: ProcessingResultCardProps) {
           </span>
 
           {/* Format Detected Pill */}
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase bg-purple-50 text-purple-700 border border-purple-200">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase bg-orange-50 text-orange-700 border border-orange-200">
             <span>Format:</span>
-            <span className="font-extrabold">{result.format_detected || "UNKNOWN"}</span>
+            <span className="font-bold">{result.format_detected || "UNKNOWN"}</span>
           </span>
 
           {/* Parser Selected */}
           {norm?.parser && (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-50 text-slate-600 border border-slate-200">
-              <Cpu className="w-3 h-3 text-purple-500" />
+              <Cpu className="w-3 h-3 text-orange-500" />
               <span>{norm.parser.parser_name}</span>
             </span>
           )}
@@ -111,7 +111,7 @@ export function ProcessingResultCard({ result }: ProcessingResultCardProps) {
           {/* Processing Latency */}
           {meta?.processing_time_ms !== undefined && (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold bg-slate-50 text-slate-600 border border-slate-200">
-              <Clock className="w-3 h-3 text-indigo-500" />
+              <Clock className="w-3 h-3 text-amber-500" />
               <span>{meta.processing_time_ms} ms</span>
             </span>
           )}
@@ -124,7 +124,7 @@ export function ProcessingResultCard({ result }: ProcessingResultCardProps) {
             onClick={() => setViewMode("visual")}
             className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               viewMode === "visual"
-                ? "bg-white text-purple-700 shadow-xs"
+                ? "bg-white text-orange-700 shadow-xs"
                 : "text-slate-500 hover:text-slate-800"
             }`}
           >
@@ -135,7 +135,7 @@ export function ProcessingResultCard({ result }: ProcessingResultCardProps) {
             onClick={() => setViewMode("json")}
             className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               viewMode === "json"
-                ? "bg-white text-purple-700 shadow-xs"
+                ? "bg-white text-orange-700 shadow-xs"
                 : "text-slate-500 hover:text-slate-800"
             }`}
           >
@@ -163,15 +163,15 @@ export function ProcessingResultCard({ result }: ProcessingResultCardProps) {
       )}
 
       {/* Traceability & Integrity Pipeline Card (SIH NTRO Core Requirement) */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-50/50 via-indigo-50/30 to-blue-50/40 border border-purple-100/80">
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-50/50 via-amber-50/30 to-orange-50/40 border border-orange-100/80">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-purple-600" />
+            <ShieldCheck className="w-4 h-4 text-orange-600" />
             <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
               Cryptographic Traceability Pipeline
             </h4>
           </div>
-          <span className="text-[11px] font-medium text-purple-700">
+          <span className="text-[11px] font-medium text-orange-700">
             Air-gapped Audit Ready
           </span>
         </div>
@@ -181,7 +181,7 @@ export function ProcessingResultCard({ result }: ProcessingResultCardProps) {
           <div className="p-3 bg-white rounded-xl border border-slate-200/80 flex items-center justify-between gap-2 shadow-xs">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase">
-                <Fingerprint className="w-3 h-3 text-purple-500" />
+                <Fingerprint className="w-3 h-3 text-orange-500" />
                 <span>Unique Event ID (UUIDv4)</span>
               </div>
               <p className="font-mono text-xs font-bold text-slate-900 truncate mt-0.5">
@@ -190,7 +190,7 @@ export function ProcessingResultCard({ result }: ProcessingResultCardProps) {
             </div>
             <button
               onClick={() => copyToClipboard(result.event_id, "event_id")}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-colors shrink-0 cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-orange-600 hover:bg-orange-50 transition-colors shrink-0 cursor-pointer"
               title="Copy Event ID"
             >
               {copiedField === "event_id" ? (
@@ -205,7 +205,7 @@ export function ProcessingResultCard({ result }: ProcessingResultCardProps) {
           <div className="p-3 bg-white rounded-xl border border-slate-200/80 flex items-center justify-between gap-2 shadow-xs">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase">
-                <Hash className="w-3 h-3 text-indigo-500" />
+                <Hash className="w-3 h-3 text-amber-500" />
                 <span>Raw Event SHA-256 Digest</span>
               </div>
               <p className="font-mono text-xs font-bold text-slate-900 truncate mt-0.5">
@@ -214,7 +214,7 @@ export function ProcessingResultCard({ result }: ProcessingResultCardProps) {
             </div>
             <button
               onClick={() => copyToClipboard(result.raw_event_hash, "raw_hash")}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors shrink-0 cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors shrink-0 cursor-pointer"
               title="Copy SHA-256 Hash"
             >
               {copiedField === "raw_hash" ? (
@@ -239,7 +239,7 @@ export function ProcessingResultCard({ result }: ProcessingResultCardProps) {
               {/* Source Endpoint */}
               <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/70">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-700 mb-2">
-                  <Network className="w-3.5 h-3.5 text-purple-600" />
+                  <Network className="w-3.5 h-3.5 text-orange-600" />
                   <span>Source Endpoint</span>
                 </div>
                 <div className="space-y-1.5 text-xs">
@@ -277,7 +277,7 @@ export function ProcessingResultCard({ result }: ProcessingResultCardProps) {
               {/* Destination Endpoint */}
               <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/70">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-700 mb-2">
-                  <Network className="w-3.5 h-3.5 text-indigo-600" />
+                  <Network className="w-3.5 h-3.5 text-amber-600" />
                   <span>Destination Endpoint</span>
                 </div>
                 <div className="space-y-1.5 text-xs">
@@ -307,7 +307,7 @@ export function ProcessingResultCard({ result }: ProcessingResultCardProps) {
               {/* Security & Action Verdict */}
               <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/70 sm:col-span-2 lg:col-span-1">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-700 mb-2">
-                  <Sliders className="w-3.5 h-3.5 text-blue-600" />
+                  <Sliders className="w-3.5 h-3.5 text-orange-600" />
                   <span>Security & Action</span>
                 </div>
                 <div className="space-y-2 text-xs">
@@ -380,7 +380,7 @@ export function ProcessingResultCard({ result }: ProcessingResultCardProps) {
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Unmapped Vendor Attributes (Lossless Container)
                 </h4>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 border border-orange-200">
                   {additionalKeys.length} Attributes Preserved
                 </span>
               </div>
@@ -421,7 +421,7 @@ export function ProcessingResultCard({ result }: ProcessingResultCardProps) {
                   "normalized_json"
                 )
               }
-              className="text-xs text-purple-600 hover:text-purple-700 font-semibold inline-flex items-center gap-1 cursor-pointer"
+              className="text-xs text-orange-600 hover:text-orange-700 font-semibold inline-flex items-center gap-1 cursor-pointer"
             >
               {copiedField === "normalized_json" ? (
                 <>
@@ -471,7 +471,7 @@ export function ProcessingResultCard({ result }: ProcessingResultCardProps) {
           </button>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-slate-200 font-mono text-xs overflow-x-auto leading-relaxed selection:bg-purple-900 selection:text-white">
+        <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-slate-200 font-mono text-xs overflow-x-auto leading-relaxed selection:bg-orange-900 selection:text-white">
           <code>{result.raw_event}</code>
         </div>
       </div>
