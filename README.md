@@ -34,10 +34,12 @@ Every module is an independent Next.js App Router page with real URL routing and
 | `/explorer` | **Logs Explorer** | KQL query builder, schema filters, field explorer, query execution with empty states |
 | `/sources` | **Sources & Parsers** | Built-in parser catalog (Cisco, Linux, Windows EVTX, Snort, Cloud) & device inventory |
 | `/threats` | **Threat Analytics** | MITRE ATT&CK enterprise matrix correlation and AI/ML anomaly scoring in standby |
+| `/anomalies` | **Anomaly Intelligence** | Explainable AI/ML Isolation Forest detections, severity confidence tiers, forensic insights |
+| `/integrity` | **Data Integrity** | Cryptographic verification console, live SHA-256 recalculation, Merkle batch anchoring, hash chain audit |
 | `/alerts` | **Security Alerts** | Incident queue with severity tabs (Critical, High, Medium, Low) and triage table |
 | `/integrations` | **Integrations** | OpenSearch, PostgreSQL, Kafka, AWS S3, Splunk connectors with standby states |
 | `/reports` | **Reports** | Cryptographic SHA-256 audit proofs, forensic exports (JSONL, CSV, Parquet), CERT-In reports |
-| `/status` | **System Status** | Framework diagnostic health center and air-gapped isolation verification |
+| `/status` | **System Status** | Framework diagnostic health center, air-gapped isolation, and cryptographic integrity monitor |
 | `/settings` | **Settings** | ULPF common schema definitions, retention policies, air-gapped security controls |
 
 ---
@@ -176,6 +178,15 @@ LogForge leverages **MySQL / PostgreSQL** with **SQLAlchemy 2.x** and **Alembic*
 | `GET` | `/api/v1/ml/anomalies` | Paginated anomaly events list with joined security event context |
 | `GET` | `/api/v1/ml/anomalies/summary` | Aggregate anomaly KPIs (normal, suspicious, highly anomalous, top sources) |
 | `GET` | `/api/v1/ml/anomalies/{event_id}` | Detailed anomaly score and domain explainability justification for event |
+| `GET` | `/api/v1/integrity/summary` | Live cryptographic integrity KPIs (verified, pending, anchored, tamper alerts) |
+| `GET` | `/api/v1/integrity/{event_id}` | Retrieve cryptographic integrity record and audit proof status for an event |
+| `POST` | `/api/v1/integrity/{event_id}/verify` | On-demand byte-level SHA-256 recalculation & tamper detection |
+| `GET` | `/api/v1/integrity/{event_id}/blockchain` | On-chain Merkle proof verification and transaction anchor receipt |
+| `POST` | `/api/v1/integrity/batches/create` | Group unbatched events into RFC 6962 binary Merkle tree batch |
+| `POST` | `/api/v1/integrity/batches/anchor` | Commit Merkle batch root to EVM smart contract anchor |
+| `GET` | `/api/v1/integrity/batches` | List all historical cryptographic Merkle batches and verification states |
+| `GET` | `/api/v1/integrity/batches/{batch_id}` | Inspect Merkle batch root, event count, and on-chain transaction metadata |
+| `POST` | `/api/v1/integrity/chain/verify` | Sequentially audit tamper-evident hash chain continuity across stored events |
 
 ---
 
@@ -191,4 +202,87 @@ LogForge features a local, air-gapped, explainable AI/ML anomaly detection pipel
 - **Domain-Specific Explainability:** Generates human-readable, domain-specific justifications (e.g. repeated perimeter blocks, off-hours execution, ingress crossing private boundary, SSH/RDP targeting) instead of opaque black-box numbers.
 - **Non-Blocking Ingestion Hook:** Real-time inference safely wraps anomaly scoring so log ingestion and normalization throughput are 100% immune to model errors.
 - **Model Persistence:** Fitted models and calibration metadata are serialized via `joblib` in `backend/models/`.
+
+---
+
+## ⛓️ Cryptographic Integrity & Blockchain Verification Layer (Phase 8)
+
+LogForge enforces enterprise-grade mathematical tamper evidence and non-repudiation using a dual-tier cryptographic architecture:
+
+```text
+┌────────────────┐       ┌─────────────────┐       ┌───────────────────┐
+│ Raw Event Log  │ ───▶  │   ULPF Engine   │ ───▶  │ MySQL Persistence │
+└────────────────┘       └─────────────────┘       └───────────────────┘
+                                   │                          │
+                        SHA-256 Hashing            Stores raw_event byte-for-byte
+                                   │                          │
+                                   ▼                          ▼
+                         ┌─────────────────┐       ┌───────────────────┐
+                         │ event_integrity │ ◀──── │ Constant-Time     │
+                         │ (Status/Chain)  │       │ Hash Verification │
+                         └─────────────────┘       └───────────────────┘
+                                   │
+                           Merkle Batching
+                                   │
+                                   ▼
+                         ┌─────────────────┐
+                         │ Merkle Tree     │ (RFC 6962 Binary Tree,
+                         │ Root Hash       │  Audit Path Generation)
+                         └─────────────────┘
+                                   │
+                          Blockchain Adapter
+                                   │
+                                   ▼
+                         ┌─────────────────┐
+                         │ IntegrityAnchor │ (EVM Smart Contract:
+                         │ Smart Contract  │  Zero-Token, Gas-Optimized)
+                         └─────────────────┘
+```
+
+### Off-Chain vs On-Chain Separation
+
+In compliance with enterprise cybersecurity data privacy mandates, CERT-In compliance guidelines, and GDPR:
+1. **Zero Raw Logs On-Chain:** Raw log strings, normalized JSON payloads, IPs, user identities, and infrastructure details **NEVER** leave MySQL or touch the blockchain.
+2. **Cryptographic Proofs Only:** The blockchain ledger only stores:
+   - 32-byte SHA-256 Merkle root (`bytes32`)
+   - Batch identifier UUID (`string`)
+   - Block timestamp (`uint256`)
+   - Event count (`uint256`)
+3. **Auditing via RFC 6962 Merkle Proofs:** Anyone with an event's raw SHA-256 hash and the Merkle audit path can mathematically verify inclusion against the immutable on-chain root in $O(\log N)$ time, without access to any other event in the batch.
+
+### Smart Contract (`IntegrityAnchor.sol`)
+
+Located at `backend/blockchain/contract/IntegrityAnchor.sol`:
+- Minimal, gas-efficient Solidity contract (0.8.20+).
+- Requires zero tokens, zero governance, and zero external oracles.
+- Provides `anchorRoot(bytes32 root, string batchId, uint256 count)` and `verifyRoot(bytes32 root)`.
+- Emits `RootAnchored` event indexed by batch ID and timestamp for instant SIEM indexer ingestion.
+
+### Local Blockchain Setup & Configuration
+
+LogForge supports local EVM nodes (Ganache, Hardhat, Anvil) or private consortia:
+
+1. **Start a local EVM node:**
+   ```bash
+   # Using Hardhat
+   npx hardhat node
+   
+   # Or using Anvil (Foundry)
+   anvil
+   
+   # Or using Ganache
+   npx ganache --port 8545
+   ```
+
+2. **Configure Environment Variables in `backend/.env`:**
+   ```env
+   BLOCKCHAIN_ENABLED=true
+   BLOCKCHAIN_RPC_URL=http://127.0.0.1:8545
+   BLOCKCHAIN_CONTRACT_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
+   BLOCKCHAIN_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+   BLOCKCHAIN_NETWORK=hardhat-local
+   ```
+
+3. **Air-Gapped / Offline Operation:**
+   When `BLOCKCHAIN_ENABLED=false` (default), LogForge operates in pure offline mode. All cryptographic SHA-256 hashing, hash chaining, and Merkle tree generation function seamlessly with zero network overhead.
 

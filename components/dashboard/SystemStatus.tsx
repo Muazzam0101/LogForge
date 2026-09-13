@@ -42,7 +42,14 @@ export function SystemStatus({ health, isLoading }: SystemStatusProps) {
       status: isOnline ? "Active (Isolation Forest)" : "Standby",
       isLive: isOnline,
     },
+    {
+      name: "Cryptographic Integrity Layer",
+      icon: ShieldCheck,
+      status: isOnline ? "Active (SHA-256 / Merkle)" : "Standby",
+      isLive: isOnline,
+    },
   ];
+
 
   return (
     <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between h-full group">

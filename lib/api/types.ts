@@ -304,4 +304,80 @@ export interface ModelStatusResponse {
   trained_at?: string | null;
 }
 
+export interface IntegritySummary {
+  total_records: number;
+  verified_count: number;
+  tampered_count: number;
+  unverified_count: number;
+  blockchain_anchored_count: number;
+  blockchain_status: string;
+  blockchain_network?: string | null;
+  latest_root_hash?: string | null;
+  last_anchored_at?: string | null;
+}
+
+export interface EventVerificationResult {
+  event_id: string;
+  integrity: "VALID" | "TAMPERED" | "NOT_FOUND" | "VERIFICATION_ERROR";
+  hash_algorithm: string;
+  stored_hash: string | null;
+  calculated_hash: string | null;
+  verified_at: string;
+  blockchain_anchored: boolean;
+  blockchain_status: string;
+  batch_id?: string | null;
+  root_hash?: string | null;
+  transaction_hash?: string | null;
+  details?: string | null;
+}
+
+export interface IntegrityRecord {
+  event_id: string;
+  sha256_hash: string;
+  hash_algorithm: string;
+  previous_hash?: string | null;
+  chain_hash?: string | null;
+  batch_id?: string | null;
+  verification_status: string;
+  blockchain_status: string;
+  blockchain_tx_hash?: string | null;
+  blockchain_network?: string | null;
+  blockchain_anchor?: string | null;
+  created_at: string;
+  verified_at?: string | null;
+}
+
+export interface IntegrityBatch {
+  batch_id: string;
+  root_hash: string;
+  event_count: number;
+  status: string;
+  blockchain_status: string;
+  blockchain_tx_hash?: string | null;
+  blockchain_network?: string | null;
+  created_at: string;
+  anchored_at?: string | null;
+}
+
+export interface ChainVerificationResult {
+  is_valid: boolean;
+  evaluated_records: number;
+  error?: string | null;
+  broken_index?: number | null;
+}
+
+export interface EventBlockchainInfo {
+  event_id: string;
+  blockchain_anchored: boolean;
+  blockchain_status: string;
+  blockchain_network?: string | null;
+  blockchain_tx_hash?: string | null;
+  batch_id?: string | null;
+  root_hash?: string | null;
+  merkle_proof?: Array<{ sibling: string; position: string }> | null;
+  anchored_at?: string | null;
+  contract_address?: string | null;
+}
+
+
 

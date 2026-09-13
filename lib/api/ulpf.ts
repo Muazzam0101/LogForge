@@ -18,7 +18,14 @@ import {
   ModelStatusResponse,
   ModelTrainingRequest,
   ModelTrainingResponse,
+  ChainVerificationResult,
+  EventBlockchainInfo,
+  EventVerificationResult,
+  IntegrityBatch,
+  IntegrityRecord,
+  IntegritySummary,
 } from "./types";
+
 
 
 const getApiBaseUrl = (): string => {
@@ -543,5 +550,197 @@ export const ulpfApi = {
       );
     }
   },
+
+  /**
+   * Fetch aggregate data integrity and blockchain anchoring summary
+   */
+  async getIntegritySummary(): Promise<IntegritySummary> {
+    const url = `${getApiBaseUrl()}/api/v1/integrity/summary`;
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new UlpfApiError(
+          data.detail?.message || `Failed to fetch integrity summary (HTTP ${res.status})`,
+          `HTTP_${res.status}`
+        );
+      }
+      return data as IntegritySummary;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError(
+        "Unable to fetch integrity summary from LogForge backend.",
+        "INTEGRITY_UNAVAILABLE",
+        err
+      );
+    }
+  },
+
+  /**
+   * Cryptographically verify an event by recalculating SHA-256 over raw bytes server-side
+   */
+  async verifyEventIntegrity(eventId: string): Promise<EventVerificationResult> {
+    const url = `${getApiBaseUrl()}/api/v1/integrity/${encodeURIComponent(eventId)}/verify`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { Accept: "application/json" },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new UlpfApiError(
+          data.detail?.message || `Verification failed (HTTP ${res.status})`,
+          `HTTP_${res.status}`
+        );
+      }
+      return data as EventVerificationResult;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError(
+        `Unable to verify integrity for event ${eventId}.`,
+        "VERIFICATION_FAILED",
+        err
+      );
+    }
+  },
+
+  /**
+   * Retrieve blockchain anchoring proof and Merkle audit path for an event
+   */
+  async getEventBlockchain(eventId: string): Promise<EventBlockchainInfo> {
+    const url = `${getApiBaseUrl()}/api/v1/integrity/${encodeURIComponent(eventId)}/blockchain`;
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new UlpfApiError(
+          data.detail || `Failed to fetch blockchain info (HTTP ${res.status})`,
+          `HTTP_${res.status}`
+        );
+      }
+      return data as EventBlockchainInfo;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError(
+        `Unable to fetch blockchain proof for event ${eventId}.`,
+        "BLOCKCHAIN_UNAVAILABLE",
+        err
+      );
+    }
+  },
+
+  /**
+   * Create a new Merkle batch from unbatched integrity records
+   */
+  async createIntegrityBatch(maxEvents: number = 50): Promise<IntegrityBatch> {
+    const url = `${getApiBaseUrl()}/api/v1/integrity/batches/create`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ max_events: maxEvents }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new UlpfApiError(
+          data.detail?.message || `Failed to create batch (HTTP ${res.status})`,
+          `HTTP_${res.status}`
+        );
+      }
+      return data as IntegrityBatch;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError("Unable to create integrity batch.", "BATCH_CREATION_FAILED", err);
+    }
+  },
+
+  /**
+   * Anchor a Merkle batch root to the blockchain
+   */
+  async anchorIntegrityBatch(batchId: string): Promise<IntegrityBatch> {
+    const url = `${getApiBaseUrl()}/api/v1/integrity/batches/anchor`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ batch_id: batchId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new UlpfApiError(
+          data.detail?.message || `Failed to anchor batch (HTTP ${res.status})`,
+          `HTTP_${res.status}`
+        );
+      }
+      return data as IntegrityBatch;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError("Unable to anchor batch to blockchain.", "ANCHORING_FAILED", err);
+    }
+  },
+
+  /**
+   * List chronological integrity batches
+   */
+  async listIntegrityBatches(limit: number = 20, offset: number = 0): Promise<IntegrityBatch[]> {
+    const url = `${getApiBaseUrl()}/api/v1/integrity/batches?limit=${limit}&offset=${offset}`;
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new UlpfApiError(
+          data.detail || `Failed to list batches (HTTP ${res.status})`,
+          `HTTP_${res.status}`
+        );
+      }
+      return data as IntegrityBatch[];
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError("Unable to list integrity batches.", "BATCH_LIST_FAILED", err);
+    }
+  },
+
+  /**
+   * Verify the sequential cryptographic hash chain
+   */
+  async verifyHashChain(limit: number = 500): Promise<ChainVerificationResult> {
+    const url = `${getApiBaseUrl()}/api/v1/integrity/chain/verify?limit=${limit}`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { Accept: "application/json" },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new UlpfApiError(
+          data.detail || `Chain verification failed (HTTP ${res.status})`,
+          `HTTP_${res.status}`
+        );
+      }
+      return data as ChainVerificationResult;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError("Unable to verify hash chain.", "CHAIN_VERIFICATION_FAILED", err);
+    }
+  },
 };
+
 

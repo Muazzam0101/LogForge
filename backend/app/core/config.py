@@ -29,5 +29,13 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3001",
     ]
 
+    # Blockchain Anchoring Configuration
+    BLOCKCHAIN_ENABLED: bool = False
+    BLOCKCHAIN_RPC_URL: str = "http://127.0.0.1:8545"
+    BLOCKCHAIN_CONTRACT_ADDRESS: str = ""
+    BLOCKCHAIN_PRIVATE_KEY: str = ""
+    BLOCKCHAIN_NETWORK: str = "local-evm"
+
 
 settings = Settings()
+

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+
 import {
   X,
   Shield,
@@ -14,8 +15,14 @@ import {
   Network,
   ShieldCheck,
   CheckCircle2,
+  AlertTriangle,
+  RefreshCw,
+  ShieldAlert,
+  Layers,
+  Link2,
 } from "lucide-react";
-import { StoredEventDetail } from "@/lib/api/types";
+import { StoredEventDetail, EventVerificationResult } from "@/lib/api/types";
+import { ulpfApi } from "@/lib/api/ulpf";
 
 interface EventDetailModalProps {
   event: StoredEventDetail | null;
@@ -27,8 +34,26 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
   const [copiedRaw, setCopiedRaw] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "overview" | "ai_analysis" | "raw" | "normalized" | "additional" | "traceability"
+    "overview" | "ai_analysis" | "raw" | "normalized" | "additional" | "traceability" | "integrity"
   >("overview");
+  const [verificationResult, setVerificationResult] = useState<EventVerificationResult | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+
+  const handleVerify = async () => {
+    if (!event) return;
+    setIsVerifying(true);
+    setVerificationError(null);
+    try {
+      const res = await ulpfApi.verifyEventIntegrity(event.event_id);
+      setVerificationResult(res);
+    } catch (err: any) {
+      setVerificationError(err.message || "Failed to verify event integrity.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
 
   if (!event) return null;
 
@@ -227,6 +252,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
                 count: additionalKeys.length > 0 ? additionalKeys.length : undefined,
               },
               { id: "traceability", label: "Traceability & Proof" },
+              { id: "integrity", label: "Integrity & Blockchain", icon: ShieldCheck },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               const Icon = tab.icon;
@@ -746,6 +772,216 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
               </div>
             </div>
           )}
+
+          {/* 7. INTEGRITY & BLOCKCHAIN TAB */}
+          {activeTab === "integrity" && (
+            <div className="space-y-4">
+              {/* Header Action Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-orange-600" />
+                    <h4 className="font-bold text-slate-900 text-sm">
+                      Cryptographic Proof & Blockchain Verification
+                    </h4>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Server-side re-computation of SHA-256 over exact raw bytes and blockchain anchor verification.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleVerify}
+                  disabled={isVerifying}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white text-xs font-bold shadow-xs transition-all cursor-pointer shrink-0"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isVerifying ? "animate-spin" : ""}`} />
+                  <span>{isVerifying ? "Verifying On Server..." : "Verify Integrity"}</span>
+                </button>
+              </div>
+
+              {/* Tamper Alert Warning Banner (If TAMPERED) */}
+              {verificationResult && verificationResult.integrity === "TAMPERED" && (
+                <div className="p-5 rounded-2xl bg-rose-50 border-2 border-rose-300 shadow-sm space-y-3 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2.5 text-rose-900 font-extrabold text-sm uppercase tracking-wide">
+                    <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
+                    <span>TAMPER DETECTED: Cryptographic Hash Mismatch</span>
+                  </div>
+                  <p className="text-xs text-rose-800 leading-relaxed">
+                    The current event raw byte hash does not match the original recorded digest. The payload has been modified or corrupted after ingestion.
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                    <div className="p-3 bg-white/90 rounded-xl border border-rose-200">
+                      <span className="text-[10px] font-bold text-rose-500 uppercase tracking-wider block">
+                        Original Stored Hash (Ingestion Baseline)
+                      </span>
+                      <p className="font-mono text-xs text-slate-800 font-bold break-all mt-1">
+                        {verificationResult.stored_hash || event.sha256_hash}
+                      </p>
+                    </div>
+
+                    <div className="p-3 bg-rose-100/70 rounded-xl border border-rose-300">
+                      <span className="text-[10px] font-bold text-rose-700 uppercase tracking-wider block">
+                        Calculated Hash (Current Raw Bytes)
+                      </span>
+                      <p className="font-mono text-xs text-rose-900 font-bold break-all mt-1">
+                        {verificationResult.calculated_hash}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Valid Status Card (If VALID) */}
+              {verificationResult && verificationResult.integrity === "VALID" && (
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-3 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-emerald-950 uppercase tracking-wider block">
+                        Cryptographically Valid & Pristine
+                      </span>
+                      <p className="text-xs text-emerald-800 mt-0.5">
+                        {verificationResult.details || "Recalculated SHA-256 matches the stored baseline digest exactly."}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-mono font-bold text-emerald-700 bg-white px-2.5 py-1 rounded-lg border border-emerald-200 shrink-0">
+                    MATCH CONFIRMED
+                  </span>
+                </div>
+              )}
+
+              {/* Unverified Initial Notice */}
+              {!verificationResult && (
+                <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex items-center gap-3">
+                  <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0" />
+                  <p className="text-xs text-amber-900">
+                    Click <strong>Verify Integrity</strong> above to initiate real-time server-side cryptographic verification over the exact raw byte stream.
+                  </p>
+                </div>
+              )}
+
+              {/* Structured Metadata Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                {/* Event ID */}
+                <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Event UUIDv4
+                  </span>
+                  <p className="font-mono text-slate-800 font-semibold truncate text-[11px]">
+                    {event.event_id}
+                  </p>
+                </div>
+
+                {/* Hash Algorithm */}
+                <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Hash Algorithm
+                  </span>
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                    <Lock className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>{verificationResult?.hash_algorithm || "SHA-256"}</span>
+                  </div>
+                </div>
+
+                {/* Integrity Status */}
+                <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Integrity Status
+                  </span>
+                  <span
+                    className={`inline-block px-2.5 py-0.5 rounded-md font-bold text-[11px] uppercase ${
+                      verificationResult?.integrity === "VALID"
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                        : verificationResult?.integrity === "TAMPERED"
+                        ? "bg-rose-50 text-rose-700 border border-rose-200"
+                        : "bg-slate-100 text-slate-700 border border-slate-200"
+                    }`}
+                  >
+                    {verificationResult?.integrity || "UNVERIFIED"}
+                  </span>
+                </div>
+
+                {/* Blockchain Status */}
+                <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Blockchain Status
+                  </span>
+                  <span
+                    className={`inline-block px-2.5 py-0.5 rounded-md font-bold text-[11px] uppercase ${
+                      verificationResult?.blockchain_anchored || verificationResult?.blockchain_status === "CONFIRMED"
+                        ? "bg-purple-50 text-purple-700 border border-purple-200"
+                        : verificationResult?.blockchain_status === "DISABLED"
+                        ? "bg-slate-100 text-slate-500 border border-slate-200"
+                        : "bg-amber-50 text-amber-700 border border-amber-200"
+                    }`}
+                  >
+                    {verificationResult?.blockchain_status || "PENDING"}
+                  </span>
+                </div>
+              </div>
+
+              {/* SHA-256 Digest Full Card */}
+              <div className="p-4 rounded-xl bg-white border border-slate-200/80 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider text-[11px]">
+                    Recorded SHA-256 Digest
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCopyHash}
+                    className="text-[11px] font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer"
+                  >
+                    {copiedHash ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedHash ? "Copied" : "Copy Digest"}</span>
+                  </button>
+                </div>
+                <p className="font-mono text-xs text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100 break-all select-all font-bold">
+                  {event.sha256_hash}
+                </p>
+              </div>
+
+              {/* Blockchain Anchoring & Merkle Batch Details */}
+              <div className="p-4.5 rounded-2xl bg-purple-50/50 border border-purple-100 space-y-3">
+                <div className="flex items-center gap-2 text-purple-950 font-bold text-xs uppercase tracking-wider">
+                  <Layers className="w-4 h-4 text-purple-600" />
+                  <span>On-Chain Merkle Tree Batch Anchor</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  To achieve massive throughput without exposing sensitive raw logs, events are aggregated into binary Merkle trees. Only the 32-byte cryptographic root hash is anchored on the smart contract.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs font-mono pt-1">
+                  <div className="p-2.5 bg-white rounded-xl border border-purple-100/80">
+                    <span className="text-[10px] text-slate-400 block font-sans">Batch UUID</span>
+                    <span className="font-bold text-slate-800 break-all text-[11px]">
+                      {verificationResult?.batch_id || "Unbatched (Awaiting Next Merkle Cycle)"}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 bg-white rounded-xl border border-purple-100/80">
+                    <span className="text-[10px] text-slate-400 block font-sans">Batch Merkle Root Hash</span>
+                    <span className="font-bold text-purple-900 break-all text-[11px]">
+                      {verificationResult?.root_hash || "Pending Batch Anchor"}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 bg-white rounded-xl border border-purple-100/80 sm:col-span-2">
+                    <span className="text-[10px] text-slate-400 block font-sans">Blockchain Transaction Hash</span>
+                    <span className="font-bold text-slate-800 break-all text-[11px]">
+                      {verificationResult?.transaction_hash || "Awaiting On-Chain Anchor"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
     </div>

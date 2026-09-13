@@ -11,6 +11,8 @@ from app.db.base import Base
 from app.services.processing_service import ULPFEngine
 import app.models.event  # Register models with Base.metadata
 import app.models.anomaly
+import app.models.integrity
+
 
 # In-memory SQLite engine for rapid, isolated, zero-external-dependency automated testing
 TEST_DATABASE_URL = "sqlite:///:memory:"

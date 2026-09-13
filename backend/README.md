@@ -256,3 +256,70 @@ Adding a parser requires zero modifications to existing parsers or downstream se
    ```
 
 The `ULPFEngine` will now automatically detect, select, and process logs using your new parser!
+
+---
+
+## 8. Data Integrity & Blockchain Verification Layer
+
+LogForge provides mathematically tamper-evident log provenance using an air-gapped cryptographic engine paired with an optional EVM blockchain anchoring layer:
+
+### Core Capabilities
+- **Non-Breaking Ingestion Hook:** SHA-256 digests and integrity tracking records are generated during ingestion without blocking throughput or coupling ingestion to blockchain latency.
+- **Constant-Time Verification:** Uses Python's `hmac.compare_digest` to eliminate timing-attack side-channels when checking stored vs recalculated event hashes.
+- **RFC 6962 Deterministic Merkle Trees:** Leaves are hashed with `\x00` prefixes and interior nodes with `\x01` prefixes (preventing second-preimage attacks). Odd leaf nodes duplicate for balanced tree generation.
+- **Logarithmic Audit Proofs:** Generates $O(\log N)$ sibling proof paths enabling external parties to mathematically prove an event's inclusion in a batch root without disclosing any other event in that batch.
+- **Tamper-Evident Hash Chaining:** Sequential verification of `SHA256(prev_chain_hash || current_sha256_hash)` to detect any database-level record deletion or insertion.
+
+### Integrity API Reference
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/integrity/summary` | Global KPIs: total records, verified, pending, anchored, tamper alerts |
+| `GET` | `/api/v1/integrity/{event_id}` | Retrieve event's integrity record, current verification status, and batch info |
+| `POST` | `/api/v1/integrity/{event_id}/verify` | Perform byte-level recalculation of `raw_event` SHA-256 and update status |
+| `GET` | `/api/v1/integrity/{event_id}/blockchain` | Retrieve on-chain Merkle audit proof, root hash, and transaction receipt |
+| `POST` | `/api/v1/integrity/batches/create` | Group unbatched events into a new deterministic Merkle batch |
+| `POST` | `/api/v1/integrity/batches/anchor` | Commit Merkle batch root to EVM smart contract anchor |
+| `GET` | `/api/v1/integrity/batches` | List all historical Merkle batches and verification states |
+| `GET` | `/api/v1/integrity/batches/{batch_id}` | Detailed inspection of a Merkle batch and on-chain metadata |
+| `POST` | `/api/v1/integrity/chain/verify` | Sequentially audit hash chain continuity across stored event records |
+
+---
+
+## 9. Smart Contract & Blockchain Setup
+
+The Solidity contract is located at `blockchain/contract/IntegrityAnchor.sol`. It is a zero-token, gas-optimized contract with no external oracle or token dependencies:
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+contract IntegrityAnchor {
+    struct AnchorRecord {
+        bytes32 merkleRoot;
+        string batchId;
+        uint256 eventCount;
+        uint256 timestamp;
+        address anchoredBy;
+    }
+    // ...
+}
+```
+
+### Local Blockchain Deployment
+
+To run a local EVM node:
+```bash
+# Terminal 1: Start local node (Hardhat, Ganache, or Anvil)
+npx hardhat node
+
+# Terminal 2: Configure backend/.env
+BLOCKCHAIN_ENABLED=true
+BLOCKCHAIN_RPC_URL=http://127.0.0.1:8545
+BLOCKCHAIN_CONTRACT_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
+BLOCKCHAIN_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+BLOCKCHAIN_NETWORK=hardhat-local
+```
+
+### Offline / Air-Gapped Mode
+If `BLOCKCHAIN_ENABLED=false` (the default), LogForge uses the `DisabledBlockchainAdapter`. All cryptographic SHA-256 hashing, hash chains, and Merkle tree generation execute locally with zero external network connectivity required.

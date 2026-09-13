@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from ...core.logging import logger
 from ...db.repositories.anomaly_repository import AnomalyRepository
 from ...db.repositories.event_repository import EventRepository
+from ...integrity.service import IntegrityService
 from ...ml.scoring import batch_score_events_safely, score_event_safely
 from ...schemas.event import ProcessingResult
 from ...schemas.explorer import EventDetailResponse, EventListResponse, EventSummaryItem
@@ -19,6 +20,7 @@ from ...services.processing_service import ULPFEngine
 from ..dependencies import get_database, get_ulpf_engine
 
 router = APIRouter(prefix="/logs", tags=["Log Ingestion, Normalization & Audit Trail"])
+
 
 
 @router.post(
@@ -75,7 +77,7 @@ def process_log(
             },
         )
 
-    # 2. Persistence into PostgreSQL
+    # 2. Persistence into Database
     try:
         EventRepository.create_from_processing_result(db, result)
     except SQLAlchemyError as exc:
@@ -92,7 +94,14 @@ def process_log(
             },
         )
 
+    # 2b. Cryptographic Integrity Record Creation
+    try:
+        IntegrityService.create_integrity_record(db, result.event_id, result.raw_event_hash)
+    except Exception as integ_err:
+        logger.warning("Integrity record creation skipped for %s: %s", result.event_id, str(integ_err))
+
     # 3. Non-blocking AI/ML Anomaly Scoring
+
     try:
         norm = result.normalized_event
         event_dict = {
@@ -164,6 +173,14 @@ def process_batch(
                     },
                 },
             )
+
+        # 2b. Cryptographic Integrity Batch Record Creation
+        try:
+            for r in results:
+                if r.status == "success":
+                    IntegrityService.create_integrity_record(db, r.event_id, r.raw_event_hash)
+        except Exception as integ_err:
+            logger.warning("Batch integrity records creation skipped: %s", str(integ_err))
 
         # 3. Non-blocking AI/ML Batch Anomaly Scoring
         try:
