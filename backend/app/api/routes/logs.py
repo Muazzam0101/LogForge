@@ -28,7 +28,8 @@ from ...search.service import search_service
 from ...services.processing_service import ULPFEngine
 from ...streaming.producer import kafka_producer_service
 from ...utils.ids import generate_event_id
-from ..dependencies import get_database, get_ulpf_engine
+from ...models.auth import UserModel
+from ..dependencies import get_database, get_ulpf_engine, require_permission
 
 router = APIRouter(prefix="/logs", tags=["Log Ingestion, Normalization & Audit Trail"])
 
@@ -49,6 +50,7 @@ def ingest_log(
     payload: LogIngestRequest,
     engine: ULPFEngine = Depends(get_ulpf_engine),
     db: Session = Depends(get_database),
+    current_user: UserModel = Depends(require_permission("logs:ingest")),
 ) -> LogIngestResponse:
     event_id = generate_event_id()
 
@@ -108,6 +110,7 @@ def ingest_batch(
     payload: BatchLogIngestRequest,
     engine: ULPFEngine = Depends(get_ulpf_engine),
     db: Session = Depends(get_database),
+    current_user: UserModel = Depends(require_permission("logs:ingest")),
 ) -> BatchLogIngestResponse:
     total_received = len(payload.logs)
     event_ids = []
@@ -208,6 +211,7 @@ def process_log(
     payload: LogProcessRequest,
     engine: ULPFEngine = Depends(get_ulpf_engine),
     db: Session = Depends(get_database),
+    current_user: UserModel = Depends(require_permission("logs:ingest")),
 ) -> ProcessingResult:
     # 1. Deterministic ULPF Processing & Normalization
     result = engine.process_event(
@@ -309,6 +313,7 @@ def process_batch(
     payload: BatchLogProcessRequest,
     engine: ULPFEngine = Depends(get_ulpf_engine),
     db: Session = Depends(get_database),
+    current_user: UserModel = Depends(require_permission("logs:ingest")),
 ) -> BatchProcessResponse:
     # 1. Process batch through ULPF
     results = engine.process_batch(

@@ -365,3 +365,45 @@ When `OPENSEARCH_ENABLED=false` or if the OpenSearch cluster is unreachable:
    curl -X POST http://127.0.0.1:8000/api/v1/search/reindex -H "Content-Type: application/json" -d '{"batch_size": 500}'
    ```
 
+---
+
+## 🔐 Authentication, RBAC & Immutable Audit Logging
+
+LogForge implements an enterprise-grade, air-gapped security boundary adhering to OWASP and NIST SP 800-53 standards. Zero third-party cloud auth providers (no Auth0, Clerk, or Firebase) are used.
+
+### 1. Cryptographic Password Hashing
+- **Algorithm:** PBKDF2 with HMAC-SHA256.
+- **Iterations:** 600,000 rounds (OWASP 2024 recommendations).
+- **Salt:** 16-byte cryptographically secure pseudorandom salt (`os.urandom(16)`), stored uniquely per user.
+- **Verification:** Constant-time `hmac.compare_digest` to prevent timing side-channel attacks.
+
+### 2. Air-Gapped Session & Token Architecture
+- Pure-Python RFC 7519 JWT token implementation with HMAC-SHA256 signatures, avoiding unpinned external C-extension binary dependencies.
+- Short-lived access tokens (15 minutes default) transported dual-mode via secure HTTP-only SameSite cookies and optional `Authorization: Bearer <token>` headers.
+
+### 3. Role-Based Access Control (RBAC)
+Four predefined enterprise security roles:
+
+| Role | Description | Core Permissions |
+| :--- | :--- | :--- |
+| `ADMIN` | System administrator with full control | All 19 permissions (`users:manage`, `audit:read`, `search:reindex`, `blockchain:anchor`, etc.) |
+| `ANALYST` | SOC Analyst / Threat Hunter | Event search, anomaly analysis, Merkle verification, forensic reporting, audit read |
+| `OPERATOR` | Infrastructure & Ingestion Engineer | Socket configuration, batch ingestion, pipeline streaming, OpenSearch reindexing |
+| `VIEWER` | Read-only Auditor / Executive | Read access to normalized security dashboards, event search, and status |
+
+### 4. Immutable Security Audit Logging
+- **Append-Only Table:** Every security-sensitive action (`LOGIN_SUCCESS`, `LOGIN_FAILED`, `USER_CREATED`, `USER_UPDATED`, `ROLE_CHANGED`, `REINDEX_STARTED`, `BLOCKCHAIN_ANCHOR_SUCCESS`) is recorded in `audit_logs`.
+- **No Deletion/Modification:** There are zero `PUT` or `DELETE` API endpoints for audit records.
+- **Automatic Secret Redaction:** `AuditService` automatically sanitizes payload keys containing `password`, `token`, `secret`, or `hash` to `[REDACTED]`.
+
+### 5. Admin User Bootstrap CLI
+Initialize the root administrative account offline:
+```bash
+cd backend
+.\venv\Scripts\python.exe -m app.cli.create_admin --username admin --email admin@logforge.local --password "YourStrongPassword123!" --full-name "System Administrator"
+```
+
+Default development credentials:
+- **Username:** `admin`
+- **Password:** `LogForgeAdmin2026!`
+- **Role:** `ADMIN`

@@ -8,7 +8,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
 
-from .api.routes import analytics, health, integrity, logs, ml, search, streaming
+from .api.routes import analytics, audit, auth, health, integrity, logs, ml, search, streaming, users
+
 
 from .core.config import settings
 from .core.logging import logger
@@ -121,12 +122,16 @@ async def general_exception_handler(
 
 # Include Routers
 app.include_router(health.router)
+app.include_router(auth.router, prefix=settings.API_V1_PREFIX)
+app.include_router(users.router, prefix=settings.API_V1_PREFIX)
+app.include_router(audit.router, prefix=settings.API_V1_PREFIX)
 app.include_router(logs.router, prefix=settings.API_V1_PREFIX)
 app.include_router(analytics.router, prefix=settings.API_V1_PREFIX)
 app.include_router(ml.router, prefix=settings.API_V1_PREFIX)
 app.include_router(integrity.router, prefix=settings.API_V1_PREFIX)
 app.include_router(search.router, prefix=settings.API_V1_PREFIX)
 app.include_router(streaming.router, prefix=settings.API_V1_PREFIX)
+
 
 
 

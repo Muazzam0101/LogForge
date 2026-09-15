@@ -219,16 +219,37 @@ def test_batch_creation_and_anchoring(test_client: TestClient, db_session: Sessi
     assert len(root_hash) == 64
     assert batch_data["event_count"] >= 2
 
-    # Anchor batch
-    anchor_resp = test_client.post(
-        "/api/v1/integrity/batches/anchor",
-        json={"batch_id": batch_id},
-    )
-    assert anchor_resp.status_code == 200
-    anchored_data = anchor_resp.json()
+    # Anchor batch with authenticated admin credentials
+    from app.main import app as fastapi_app
+    from app.api.dependencies import get_current_user
+    from app.models.auth import UserModel, RoleModel, PermissionModel
+    import uuid
 
-    assert anchored_data["batch_id"] == batch_id
-    assert anchored_data["blockchain_status"] in ("CONFIRMED", "PENDING", "DISABLED")
+    mock_admin = UserModel(
+        id=str(uuid.uuid4()),
+        username="admin_anchor_tester",
+        email="admin_anchor@test.local",
+        full_name="Admin Anchor Tester",
+        is_active=True,
+    )
+    admin_role = RoleModel(id=str(uuid.uuid4()), name="ADMIN")
+    anchor_perm = PermissionModel(id=str(uuid.uuid4()), name="blockchain:anchor")
+    admin_role.permissions = [anchor_perm]
+    mock_admin.roles = [admin_role]
+
+    fastapi_app.dependency_overrides[get_current_user] = lambda: mock_admin
+    try:
+        anchor_resp = test_client.post(
+            "/api/v1/integrity/batches/anchor",
+            json={"batch_id": batch_id},
+        )
+        assert anchor_resp.status_code == 200
+        anchored_data = anchor_resp.json()
+
+        assert anchored_data["batch_id"] == batch_id
+        assert anchored_data["blockchain_status"] in ("CONFIRMED", "PENDING", "DISABLED")
+    finally:
+        fastapi_app.dependency_overrides.pop(get_current_user, None)
 
 
 # ==============================================================================

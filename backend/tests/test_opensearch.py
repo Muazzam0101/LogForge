@@ -74,10 +74,12 @@ def test_opensearch_available_ping():
     mock_client.ping.return_value = True
 
     manager = OpenSearchClientManager()
+    manager._last_check = 0.0
     with patch.object(settings, "OPENSEARCH_ENABLED", True):
-        with patch.object(manager, "get_client", return_value=mock_client):
-            assert manager.is_available() is True
-            mock_client.ping.assert_called_once()
+        with patch("socket.create_connection"):
+            with patch.object(manager, "get_client", return_value=mock_client):
+                assert manager.is_available() is True
+                mock_client.ping.assert_called_once()
 
 
 # 2. Index Schema & Mapping Tests

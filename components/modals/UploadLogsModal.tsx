@@ -15,9 +15,11 @@ import {
   FileText,
   Play,
   Layers,
+  ShieldAlert,
 } from "lucide-react";
 import { ulpfApi, UlpfApiError } from "@/lib/api/ulpf";
 import { useModals } from "@/components/context/ModalContext";
+import { useAuth } from "@/components/context/AuthContext";
 import { extractLogsFromText } from "@/lib/utils/logExtractor";
 import { validateLogFile, validateLogText } from "@/lib/utils/fileValidator";
 
@@ -39,6 +41,9 @@ interface SelectedFileInfo {
 export function UploadLogsModal({ isOpen, onClose }: UploadLogsModalProps) {
   const router = useRouter();
   const { setActiveResult, setStagedLogContent } = useModals();
+  const { hasPermission, role } = useAuth();
+  const canIngest = hasPermission("logs:ingest");
+
   const [dragOver, setDragOver] = useState(false);
   const [selectedFile, setSelectedFile] = useState<SelectedFileInfo | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,6 +55,10 @@ export function UploadLogsModal({ isOpen, onClose }: UploadLogsModalProps) {
 
   const processLoadedFile = async (file: File) => {
     setUploadError(null);
+    if (!canIngest) {
+      setUploadError("Access Denied: Your account role does not have permission to ingest logs.");
+      return;
+    }
 
     // 1. Strict multi-layer file validation (reject images, PDFs, archives, binaries)
     const validation = await validateLogFile(file);
@@ -126,6 +135,11 @@ export function UploadLogsModal({ isOpen, onClose }: UploadLogsModalProps) {
   // Action 1: Ingest & process immediately through live FastAPI ULPF Engine
   const handleProcessNow = async () => {
     if (!selectedFile || isSubmitting) return;
+
+    if (!canIngest) {
+      setUploadError("Access Denied: Your account role lacks the 'logs:ingest' permission. Ingestion is restricted to Operator and Admin roles.");
+      return;
+    }
 
     setIsSubmitting(true);
     setUploadError(null);
@@ -228,6 +242,21 @@ export function UploadLogsModal({ isOpen, onClose }: UploadLogsModalProps) {
             </div>
           )}
 
+          {/* RBAC Warning Banner for Read-Only / Unauthorized Roles */}
+          {!canIngest && (
+            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-800 dark:text-amber-300">
+              <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div className="text-xs">
+                <p className="font-bold">
+                  Read-Only Access ({role || "VIEWER"}): Ingestion Restricted
+                </p>
+                <p className="mt-0.5 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300/80">
+                  Your current account does not have the <code>logs:ingest</code> permission. Log submission, batch uploads, and pipeline ingestion are restricted to <strong>Operator</strong> and <strong>Admin</strong> roles.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Drag and Drop Zone or Selected File View */}
           {!selectedFile ? (
             <div
@@ -255,8 +284,14 @@ export function UploadLogsModal({ isOpen, onClose }: UploadLogsModalProps) {
 
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold shadow-xs cursor-pointer transition-colors"
+                onClick={() => canIngest && fileInputRef.current?.click()}
+                disabled={!canIngest}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-white text-xs font-semibold shadow-xs transition-colors ${
+                  canIngest
+                    ? "bg-orange-600 hover:bg-orange-700 cursor-pointer"
+                    : "bg-slate-400 opacity-60 cursor-not-allowed"
+                }`}
+                title={!canIngest ? "Ingestion restricted to Operator or Admin roles" : undefined}
               >
                 <UploadCloud className="w-4 h-4" />
                 <span>Browse Local Files</span>
@@ -382,9 +417,16 @@ export function UploadLogsModal({ isOpen, onClose }: UploadLogsModalProps) {
             )}
 
             <button
-              onClick={selectedFile ? handleProcessNow : () => fileInputRef.current?.click()}
-              disabled={isSubmitting}
-              className="px-4 py-2 rounded-xl text-xs font-semibold bg-orange-600 hover:bg-orange-700 text-white shadow-xs transition-colors disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              onClick={selectedFile ? handleProcessNow : () => canIngest && fileInputRef.current?.click()}
+              disabled={isSubmitting || !canIngest}
+              title={!canIngest ? "Requires Operator or Admin role" : undefined}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold text-white shadow-xs transition-colors flex items-center gap-1.5 ${
+                !canIngest
+                  ? "bg-slate-400 opacity-50 cursor-not-allowed"
+                  : isSubmitting
+                  ? "bg-orange-600 opacity-70 cursor-wait"
+                  : "bg-orange-600 hover:bg-orange-700 cursor-pointer"
+              }`}
             >
               {isSubmitting ? (
                 <>

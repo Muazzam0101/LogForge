@@ -3,6 +3,7 @@ import { Outfit, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { ThemeProvider } from "@/components/context/ThemeContext";
+import { AuthProvider } from "@/components/context/AuthContext";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -51,7 +52,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans antialiased selection:bg-orange-100 selection:text-orange-900">
         <ThemeProvider>
-          <DashboardShell>{children}</DashboardShell>
+          <AuthProvider>
+            <DashboardShell>{children}</DashboardShell>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

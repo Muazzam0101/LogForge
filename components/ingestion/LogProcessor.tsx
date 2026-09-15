@@ -14,8 +14,10 @@ import {
   Loader2,
   FileText,
   X,
+  ShieldAlert,
 } from "lucide-react";
 import { ulpfApi, UlpfApiError } from "@/lib/api/ulpf";
+import { useAuth } from "@/components/context/AuthContext";
 import { BatchProcessResponse, ProcessingResult } from "@/lib/api/types";
 import { useModals } from "@/components/context/ModalContext";
 import { extractLogsFromText } from "@/lib/utils/logExtractor";
@@ -58,6 +60,9 @@ export function LogProcessor({
   setIsProcessing,
 }: LogProcessorProps) {
   const { stagedLogContent, setStagedLogContent } = useModals();
+  const { hasPermission, role } = useAuth();
+  const canIngest = hasPermission("logs:ingest");
+
   const [rawLog, setRawLog] = useState("");
   const [sourceHint, setSourceHint] = useState("");
   const [dragActive, setDragActive] = useState(false);
@@ -82,6 +87,11 @@ export function LogProcessor({
   const handleProcess = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!rawLog.trim() || isProcessing) return;
+
+    if (!canIngest) {
+      setValidationError("Access Denied: Your account role lacks the 'logs:ingest' permission. Ingestion is restricted to Operator and Admin roles.");
+      return;
+    }
 
     // Validate payload against binary / non-log data
     const textValidation = validateLogText(rawLog);
@@ -228,6 +238,17 @@ export function LogProcessor({
 
       {/* Main Input Form */}
       <form onSubmit={handleProcess} className="mt-5 space-y-4">
+        {/* RBAC Warning Banner for Read-Only / Unauthorized Roles */}
+        {!canIngest && (
+          <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-300">
+            <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-bold">Read-Only Mode ({role || "VIEWER"}): </span>
+              <span>Manual log ingestion and pipeline execution are restricted. Ingestion requires an <strong>Operator</strong> or <strong>Admin</strong> account.</span>
+            </div>
+          </div>
+        )}
+
         {/* Validation Error Alert Banner */}
         {validationError && (
           <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 flex items-start justify-between gap-2.5 text-xs text-rose-800 animate-in fade-in duration-200">
@@ -332,8 +353,13 @@ export function LogProcessor({
 
             <button
               type="submit"
-              disabled={!rawLog.trim() || isProcessing}
-              className="px-6 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 dark:bg-[#8B5CF6] dark:hover:bg-[#6D28D9] text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
+              disabled={!rawLog.trim() || isProcessing || !canIngest}
+              title={!canIngest ? "Log ingestion requires Operator or Admin role" : undefined}
+              className={`px-6 py-2.5 rounded-xl text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-2 ${
+                !canIngest
+                  ? "bg-slate-400 dark:bg-slate-700 opacity-50 cursor-not-allowed"
+                  : "bg-orange-600 hover:bg-orange-700 dark:bg-[#8B5CF6] dark:hover:bg-[#6D28D9] hover:shadow-md active:scale-95 cursor-pointer"
+              }`}
             >
               {isProcessing ? (
                 <>

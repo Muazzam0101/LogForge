@@ -10,11 +10,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from ...audit.service import audit_service
 from ...core.logging import logger
+from ...models.auth import UserModel
 from ...schemas.explorer import EventListResponse
 from ...schemas.response import ErrorResponse
 from ...search.service import search_service
-from ..dependencies import get_database
+from ..dependencies import get_database, require_permission
+
 
 router = APIRouter(prefix="/search", tags=["OpenSearch Scalability & Analytics"])
 
@@ -154,12 +157,33 @@ def get_search_health() -> OpenSearchHealthResponse:
 )
 def reindex_from_mysql(
     payload: Optional[ReindexRequest] = None,
+    current_user: UserModel = Depends(require_permission("search:reindex")),
     db: Session = Depends(get_database),
 ) -> ReindexResponse:
     chunk_size = payload.batch_size if payload else None
+
+    audit_service.record_event(
+        db=db,
+        action="REINDEX_STARTED",
+        resource_type="index",
+        user_id=current_user.id,
+        username=current_user.username,
+        status="SUCCESS",
+        details={"batch_size": chunk_size},
+    )
+
     result = search_service.reindex_from_mysql(db=db, batch_size=chunk_size)
 
     if result.get("status") == "unavailable":
+        audit_service.record_event(
+            db=db,
+            action="REINDEX_FAILED",
+            resource_type="index",
+            user_id=current_user.id,
+            username=current_user.username,
+            status="FAILURE",
+            details={"error": result.get("message")},
+        )
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={
@@ -171,4 +195,15 @@ def reindex_from_mysql(
             },
         )
 
+    audit_service.record_event(
+        db=db,
+        action="REINDEX_COMPLETED",
+        resource_type="index",
+        user_id=current_user.id,
+        username=current_user.username,
+        status="SUCCESS",
+        details=result,
+    )
+
     return ReindexResponse(**result)
+

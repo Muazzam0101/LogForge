@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
-from ...api.dependencies import get_database
+from ...api.dependencies import get_database, require_permission
+from ...audit.service import audit_service
 from ...integrity.schemas import (
     AnchorBatchRequest,
     ChainVerificationResponse,
@@ -16,6 +17,7 @@ from ...integrity.schemas import (
     IntegritySummaryResponse,
 )
 from ...integrity.service import IntegrityService
+from ...models.auth import UserModel
 from ...models.integrity import IntegrityBatchModel
 
 router = APIRouter(prefix="/integrity", tags=["Data Integrity & Blockchain"])
@@ -92,11 +94,37 @@ def create_batch(
 )
 def anchor_batch(
     payload: AnchorBatchRequest,
+    current_user: UserModel = Depends(require_permission("blockchain:anchor")),
     db: Session = Depends(get_database),
 ) -> IntegrityBatchResponse:
     try:
-        return IntegrityService.anchor_batch(db, batch_id=payload.batch_id)
+        batch = IntegrityService.anchor_batch(db, batch_id=payload.batch_id)
+        audit_service.record_event(
+            db=db,
+            action="BLOCKCHAIN_ANCHOR_SUCCESS",
+            resource_type="integrity_batch",
+            resource_id=payload.batch_id,
+            user_id=current_user.id,
+            username=current_user.username,
+            status="SUCCESS",
+            details={
+                "tx_hash": batch.blockchain_tx_hash,
+                "network": batch.blockchain_network,
+                "root_hash": batch.root_hash,
+            },
+        )
+        return batch
     except ValueError as exc:
+        audit_service.record_event(
+            db=db,
+            action="BLOCKCHAIN_ANCHOR_FAILED",
+            resource_type="integrity_batch",
+            resource_id=payload.batch_id,
+            user_id=current_user.id,
+            username=current_user.username,
+            status="FAILURE",
+            details={"error": str(exc)},
+        )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"status": "failed", "message": str(exc)},

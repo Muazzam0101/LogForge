@@ -18,9 +18,11 @@ import {
   AlertTriangle,
   Loader2,
   Sparkles,
+  ShieldAlert,
 } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { useModals } from "@/components/context/ModalContext";
+import { useAuth } from "@/components/context/AuthContext";
 import { LogProcessor } from "@/components/ingestion/LogProcessor";
 import { ProcessingResultCard } from "@/components/ingestion/ProcessingResultCard";
 import { BatchProcessingResultCard } from "@/components/ingestion/BatchProcessingResultCard";
@@ -36,6 +38,8 @@ export default function IngestionPage() {
     setActiveResult,
     setStagedLogContent,
   } = useModals();
+  const { hasPermission, role } = useAuth();
+  const canIngest = hasPermission("logs:ingest");
 
   // Processing state
   const [processingError, setProcessingError] = useState<UlpfApiError | null>(null);
@@ -80,6 +84,16 @@ export default function IngestionPage() {
 
   // Direct dropzone file handler with live backend upload & processing
   const handleDropzoneFile = async (file: File) => {
+    if (!canIngest) {
+      handleError(
+        new UlpfApiError(
+          "Access Denied: Your account role does not have the 'logs:ingest' permission. Ingestion is restricted to Operator and Admin roles.",
+          "PERMISSION_DENIED"
+        )
+      );
+      return;
+    }
+
     // 1. Strict multi-layer file validation (reject images, PDFs, archives, binaries)
     const validation = await validateLogFile(file);
     if (!validation.valid) {
@@ -206,6 +220,23 @@ export default function IngestionPage() {
           </div>
         </div>
       </ScrollReveal>
+
+      {/* RBAC Read-Only Alert Banner for Unauthorized Roles */}
+      {!canIngest && (
+        <ScrollReveal direction="up" delay={75} duration={500}>
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3.5 text-amber-800 dark:text-amber-300">
+            <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider">
+                RBAC Access Notice: Read-Only Role ({role || "VIEWER"})
+              </h4>
+              <p className="text-xs text-amber-700 dark:text-amber-300/80 mt-0.5 leading-relaxed">
+                Log ingestion, batch file uploads, and streaming endpoints require the <code>logs:ingest</code> permission. Current account is restricted to viewing dashboards, analytics, and security reports. To ingest logs, please sign in with an <strong>OPERATOR</strong> or <strong>ADMIN</strong> account.
+              </p>
+            </div>
+          </div>
+        </ScrollReveal>
+      )}
 
       {/* Main Interactive Live Processor Card */}
       <div ref={processorSectionRef}>

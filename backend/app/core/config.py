@@ -62,6 +62,20 @@ class Settings(BaseSettings):
     KAFKA_SECURITY_PROTOCOL: str = "PLAINTEXT"
     KAFKA_CLIENT_ID: str = "logforge-producer"
 
+    # Authentication, Session & Security Configuration
+    JWT_SECRET_KEY: str = "logforge-super-secret-key-for-jwt-sih-2026-ntro-secure"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    AUTH_COOKIE_NAME: str = "logforge_access_token"
+    AUTH_REFRESH_COOKIE_NAME: str = "logforge_refresh_token"
+    AUTH_COOKIE_SECURE: bool = False
+    AUTH_COOKIE_SAMESITE: str = "lax"
+    DEFAULT_ADMIN_EMAIL: str = "admin@logforge.security"
+    DEFAULT_ADMIN_USERNAME: str = "admin"
+    DEFAULT_ADMIN_FULL_NAME: str = "System Administrator"
+
 
 settings = Settings()
+
 

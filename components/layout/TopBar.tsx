@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Bell, Sun, Moon, ChevronDown, PanelLeft, PanelLeftClose, ShieldCheck, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, Bell, Sun, Moon, ChevronDown, PanelLeft, PanelLeftClose, ShieldCheck, Check, LogOut, User as UserIcon, Shield } from "lucide-react";
 import { useTheme } from "@/components/context/ThemeContext";
+import { useAuth } from "@/components/context/AuthContext";
 
 interface TopBarProps {
   isSidebarOpen: boolean;
@@ -10,12 +12,20 @@ interface TopBarProps {
 }
 
 export function TopBar({ isSidebarOpen, onToggleSidebar }: TopBarProps) {
+  const router = useRouter();
   const { theme, toggleTheme } = useTheme();
+  const { user, role, logout } = useAuth();
   const [searchValue, setSearchValue] = useState("");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogout = async () => {
+    setUserDropdownOpen(false);
+    await logout();
+    router.push("/login");
+  };
 
   // Global shortcut: Ctrl+K or '/' focuses search bar
   useEffect(() => {
@@ -134,7 +144,7 @@ export function TopBar({ isSidebarOpen, onToggleSidebar }: TopBarProps) {
         {/* Divider */}
         <div className="h-6 w-px bg-slate-200 dark:bg-[#292C35]" />
 
-        {/* User Profile matching Reference Image: Orange Avatar with 'A', 'Admin', 'Security Analyst' */}
+        {/* User Profile & Role Indicator */}
         <div className="relative">
           <button
             onClick={() => {
@@ -143,31 +153,61 @@ export function TopBar({ isSidebarOpen, onToggleSidebar }: TopBarProps) {
             }}
             className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1D2027] transition-colors focus:outline-none cursor-pointer"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-600 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
-              A
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-rose-600 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
+              {(user?.full_name?.[0] || user?.username?.[0] || "U").toUpperCase()}
             </div>
             <div className="hidden md:block text-left">
-              <div className="text-xs font-bold text-slate-900 dark:text-[#F5F5F7] leading-tight">Admin</div>
-              <div className="text-[10px] text-slate-400 dark:text-[#A5A7B0] font-medium leading-tight">Security Analyst</div>
+              <div className="text-xs font-bold text-slate-900 dark:text-[#F5F5F7] leading-tight">
+                {user?.full_name || user?.username || "Authenticated"}
+              </div>
+              <div className="text-[10px] font-semibold text-orange-600 dark:text-[#8B5CF6] leading-tight">
+                {role || "VIEWER"}
+              </div>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 dark:text-[#A5A7B0] hidden sm:block shrink-0" />
           </button>
 
           {userDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#17191F] rounded-2xl shadow-xl border border-slate-100 dark:border-[#292C35] p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-[#17191F] rounded-2xl shadow-xl border border-slate-100 dark:border-[#292C35] p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
               <div className="px-3 py-2 border-b border-slate-100 dark:border-[#292C35]">
-                <p className="text-xs font-bold text-slate-800 dark:text-[#F5F5F7]">Admin</p>
-                <p className="text-[11px] text-slate-400 dark:text-[#A5A7B0] truncate">admin@logforge.security</p>
+                <p className="text-xs font-bold text-slate-800 dark:text-[#F5F5F7]">
+                  {user?.full_name || user?.username || "Admin User"}
+                </p>
+                <p className="text-[11px] text-slate-400 dark:text-[#A5A7B0] truncate">
+                  {user?.email || "admin@logforge.local"}
+                </p>
               </div>
               <div className="py-1">
-                <div className="flex items-center gap-2 px-3 py-2 text-xs text-slate-600 dark:text-[#A5A7B0] hover:text-slate-900 dark:hover:text-[#F5F5F7] rounded-lg hover:bg-slate-50 dark:hover:bg-[#1D2027] cursor-pointer">
-                  <ShieldCheck className="w-4 h-4 text-orange-600 dark:text-[#8B5CF6]" />
-                  <span>Role: Security Analyst</span>
+                <div className="flex items-center justify-between px-3 py-2 text-xs text-slate-600 dark:text-[#A5A7B0] rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-orange-600 dark:text-[#8B5CF6]" />
+                    <span>Active Role</span>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-orange-100 text-orange-700 dark:bg-[#8B5CF6]/20 dark:text-[#A78BFA] border border-orange-200/50 dark:border-[#8B5CF6]/30">
+                    {role || "VIEWER"}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-2 text-xs text-slate-600 dark:text-[#A5A7B0] hover:text-slate-900 dark:hover:text-[#F5F5F7] rounded-lg hover:bg-slate-50 dark:hover:bg-[#1D2027] cursor-pointer">
-                  <Check className="w-4 h-4 text-emerald-500" />
-                  <span>NTRO ULPF Session</span>
+
+                <div
+                  onClick={() => {
+                    setUserDropdownOpen(false);
+                    router.push("/settings");
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 text-xs text-slate-600 dark:text-[#A5A7B0] hover:text-slate-900 dark:hover:text-[#F5F5F7] rounded-lg hover:bg-slate-50 dark:hover:bg-[#1D2027] cursor-pointer"
+                >
+                  <UserIcon className="w-4 h-4 text-slate-400" />
+                  <span>Account & Settings</span>
                 </div>
+
+                <div className="my-1 border-t border-slate-100 dark:border-[#292C35]" />
+
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg cursor-pointer transition-colors"
+                >
+                  <LogOut className="w-4 h-4 text-rose-500" />
+                  <span>Sign Out</span>
+                </button>
               </div>
             </div>
           )}

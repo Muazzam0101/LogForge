@@ -459,6 +459,100 @@ export interface StreamingHealthResponse {
   message: string;
 }
 
+// ==========================================
+// Authentication, RBAC, and Audit Logging
+// ==========================================
+
+export type SystemRole = "ADMIN" | "ANALYST" | "OPERATOR" | "VIEWER";
+
+export interface Permission {
+  id: string;
+  name: string;
+  description?: string | null;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description?: string | null;
+  permissions: string[];
+}
+
+export interface User {
+  id: string;
+  email: string;
+  username: string;
+  full_name: string;
+  is_active: boolean;
+  created_at: string;
+  last_login_at?: string | null;
+  roles: string[];
+  permissions: string[];
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  status: string;
+  user: User;
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+}
+
+export interface UserCreateRequest {
+  email: string;
+  username: string;
+  password: string;
+  full_name: string;
+  roles: string[];
+}
+
+export interface UserUpdateRequest {
+  email?: string;
+  full_name?: string;
+  is_active?: boolean;
+  password?: string;
+  roles?: string[];
+}
+
+export interface AuditLogItem {
+  id: string;
+  timestamp: string;
+  user_id?: string | null;
+  username?: string | null;
+  action: string;
+  resource_type: string;
+  resource_id?: string | null;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  status: "SUCCESS" | "FAILURE";
+  details?: Record<string, unknown> | null;
+}
+
+export interface AuditListResponse {
+  total: number;
+  limit: number;
+  offset: number;
+  page: number;
+  events: AuditLogItem[];
+}
+
+export interface AuditQueryParams {
+  limit?: number;
+  offset?: number;
+  action?: string;
+  user_id?: string;
+  username?: string;
+  resource_type?: string;
+  status?: string;
+  start_time?: string;
+  end_time?: string;
+}
+
 
 
 
