@@ -54,6 +54,39 @@ services:
     networks:
       - logforge-network
 
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: logforge-kafka
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://:9092,PLAINTEXT_HOST://:9094,CONTROLLER://:29093'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9094'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_JVM_PERFORMANCE_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "9094:9094"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    networks:
+      - logforge-network
+
   backend:
     build:
       context: ./backend
@@ -70,10 +103,47 @@ services:
       OPENSEARCH_BULK_SIZE: "500"
       OPENSEARCH_USE_SSL: "false"
       OPENSEARCH_VERIFY_CERTS: "false"
+      KAFKA_ENABLED: "true"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      KAFKA_LOG_TOPIC: "logforge.raw-events"
+      KAFKA_DLQ_TOPIC: "logforge.dead-letter"
+      KAFKA_CONSUMER_GROUP: "logforge-ulpf-workers"
     ports:
       - "8000:8000"
     depends_on:
       mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+    networks:
+      - logforge-network
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: logforge-worker
+    command: python -m app.streaming.worker
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: mysql+pymysql://root:@mysql:3306/logforge
+      DEBUG: "False"
+      OPENSEARCH_ENABLED: "true"
+      OPENSEARCH_URL: "http://opensearch:9200"
+      OPENSEARCH_INDEX: "logforge-events"
+      OPENSEARCH_USE_SSL: "false"
+      OPENSEARCH_VERIFY_CERTS: "false"
+      KAFKA_ENABLED: "true"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      KAFKA_LOG_TOPIC: "logforge.raw-events"
+      KAFKA_DLQ_TOPIC: "logforge.dead-letter"
+      KAFKA_CONSUMER_GROUP: "logforge-ulpf-workers"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
       opensearch:
         condition: service_healthy
@@ -102,7 +172,10 @@ volumes:
     driver: local
   opensearch_data:
     driver: local
+  kafka_data:
+    driver: local
 
 networks:
   logforge-network:
     driver: bridge
+

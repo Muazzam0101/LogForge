@@ -3,6 +3,7 @@
 Provides thread-safe, resilient client instantiation and connectivity health checks.
 Strictly isolates cluster credentials and configuration within the backend.
 """
+import time
 from typing import Any, Dict, Optional
 import urllib3
 from opensearchpy import OpenSearch
@@ -20,6 +21,9 @@ class OpenSearchClientManager:
 
     _instance: Optional["OpenSearchClientManager"] = None
     _client: Optional[OpenSearch] = None
+    _last_check: float = 0.0
+    _cached_available: bool = False
+    _check_interval: float = 15.0
 
     def __new__(cls) -> "OpenSearchClientManager":
         if cls._instance is None:
@@ -61,19 +65,44 @@ class OpenSearchClientManager:
             return None
 
     def is_available(self) -> bool:
-        """Pings the OpenSearch cluster with a rapid timeout to verify availability."""
+        """Pings the OpenSearch cluster with cached availability status to avoid latency cascades."""
         if not settings.OPENSEARCH_ENABLED:
+            return False
+
+        now = time.time()
+        if now - self._last_check < self._check_interval:
+            return self._cached_available
+
+        # Ultra-fast non-blocking TCP socket probe (50ms) to check if host:port is listening
+        try:
+            import socket
+            from urllib.parse import urlparse
+            parsed = urlparse(settings.OPENSEARCH_URL)
+            host = parsed.hostname or "localhost"
+            port = parsed.port or (443 if parsed.scheme == "https" else 9200)
+            with socket.create_connection((host, port), timeout=0.05):
+                pass
+        except Exception:
+            self._cached_available = False
+            self._last_check = now
             return False
 
         client = self.get_client()
         if client is None:
+            self._cached_available = False
+            self._last_check = now
             return False
 
         try:
-            return bool(client.ping())
+            self._cached_available = bool(client.ping(request_timeout=0.5))
         except (ConnectionError, TransportError, OpenSearchException, Exception) as exc:
             logger.debug("OpenSearch ping failed: %s", exc)
-            return False
+            self._cached_available = False
+
+        self._last_check = now
+        return self._cached_available
+
+
 
     def get_cluster_health(self) -> Dict[str, Any]:
         """Queries cluster health details safely without exposing sensitive connection data."""

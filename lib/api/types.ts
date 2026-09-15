@@ -405,5 +405,60 @@ export interface EventBlockchainInfo {
   contract_address?: string | null;
 }
 
+export interface LogIngestRequest {
+  raw_log: string;
+  source_id?: string | null;
+  source_hint?: string | null;
+}
+
+export interface LogIngestResponse {
+  status: string;
+  event_id: string;
+  topic?: string | null;
+  partition?: number | null;
+  mode: string;
+  ingested_at: string;
+}
+
+export interface BatchLogIngestItem {
+  raw_log: string;
+  source_id?: string | null;
+  source_hint?: string | null;
+}
+
+export interface BatchLogIngestRequest {
+  logs: (string | BatchLogIngestItem)[];
+  source_id?: string | null;
+  source_hint?: string | null;
+}
+
+export interface BatchLogIngestResponse {
+  status: string;
+  total_received: number;
+  total_accepted: number;
+  total_failed: number;
+  mode: string;
+  event_ids: string[];
+  errors: Array<{ index: number; error: any }>;
+}
+
+export interface StreamingTopicInfo {
+  name: string;
+  partitions: number;
+  status: string;
+}
+
+export interface StreamingHealthResponse {
+  status: "CONNECTED" | "DISCONNECTED" | "DISABLED" | "UNAVAILABLE";
+  enabled: boolean;
+  bootstrap_servers: string;
+  cluster_id?: string | null;
+  brokers_count: number;
+  topics: StreamingTopicInfo[];
+  consumer_group: string;
+  message: string;
+}
+
+
 
 

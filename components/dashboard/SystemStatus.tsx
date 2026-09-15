@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Cpu, Database, Brain, HardDrive, ShieldCheck, CheckCircle2, AlertCircle, Search } from "lucide-react";
-import { HealthResponse, OpenSearchHealth } from "@/lib/api/types";
+import { Cpu, Database, Brain, HardDrive, ShieldCheck, CheckCircle2, AlertCircle, Search, Layers } from "lucide-react";
+import { HealthResponse, OpenSearchHealth, StreamingHealthResponse } from "@/lib/api/types";
 import { ulpfApi } from "@/lib/api/ulpf";
 
 interface SystemStatusProps {
@@ -12,9 +12,11 @@ interface SystemStatusProps {
 
 export function SystemStatus({ health, isLoading }: SystemStatusProps) {
   const [searchHealth, setSearchHealth] = useState<OpenSearchHealth | null>(null);
+  const [streamingHealth, setStreamingHealth] = useState<StreamingHealthResponse | null>(null);
 
   useEffect(() => {
     ulpfApi.getSearchHealth().then(setSearchHealth).catch(() => null);
+    ulpfApi.getStreamingHealth().then(setStreamingHealth).catch(() => null);
   }, []);
 
   const isOnline = health?.status === "healthy";
@@ -26,6 +28,18 @@ export function SystemStatus({ health, isLoading }: SystemStatusProps) {
       icon: Cpu,
       status: isLoading ? "Checking..." : isOnline ? `Active (v${health?.version})` : "Offline",
       isLive: isOnline,
+    },
+    {
+      name: "Apache Kafka Event Bus",
+      icon: Layers,
+      status: !streamingHealth
+        ? "Checking..."
+        : streamingHealth.status === "CONNECTED"
+        ? `Connected (${streamingHealth.brokers_count} Broker${streamingHealth.brokers_count > 1 ? "s" : ""})`
+        : streamingHealth.status === "DISABLED"
+        ? "Disabled (Direct Ingestion)"
+        : "Disconnected (Fallback Active)",
+      isLive: streamingHealth?.status === "CONNECTED",
     },
     {
       name: "MySQL Persistent Store",
@@ -45,6 +59,7 @@ export function SystemStatus({ health, isLoading }: SystemStatusProps) {
         : "Disconnected (Fallback Active)",
       isLive: searchHealth?.status === "CONNECTED",
     },
+
     {
       name: "Deterministic Parsers",
       icon: HardDrive,

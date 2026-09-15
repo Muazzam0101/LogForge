@@ -41,6 +41,11 @@ class IntegrityService:
         sha256_hash: str,
     ) -> EventIntegrityModel:
         """Creates and links an immutable event integrity record for an ingested event."""
+        # Idempotency: Check if integrity record for event_id already exists
+        existing = db.scalars(select(EventIntegrityModel).where(EventIntegrityModel.event_id == event_id)).first()
+        if existing:
+            return existing
+
         # 1. Fetch previous record to compute hash chain pointer
         stmt = select(EventIntegrityModel).order_by(desc(EventIntegrityModel.id)).limit(1)
         prev_record = db.scalars(stmt).first()

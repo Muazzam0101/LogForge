@@ -26,7 +26,13 @@ import {
   IntegritySummary,
   OpenSearchHealth,
   ReindexResponse,
+  LogIngestRequest,
+  LogIngestResponse,
+  BatchLogIngestRequest,
+  BatchLogIngestResponse,
+  StreamingHealthResponse,
 } from "./types";
+
 
 
 
@@ -811,6 +817,96 @@ export const ulpfApi = {
       throw new UlpfApiError("Unable to trigger OpenSearch reindex.", "REINDEX_FAILED", err);
     }
   },
+
+  /**
+   * Asynchronously ingest a single raw log event into the Kafka stream
+   */
+  async ingestLog(payload: LogIngestRequest): Promise<LogIngestResponse> {
+    const url = `${getApiBaseUrl()}/api/v1/logs/ingest`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const errorObj = data.detail?.error || data.error;
+        throw new UlpfApiError(
+          errorObj?.message || `Ingestion failed with status ${res.status}`,
+          errorObj?.code || `HTTP_${res.status}`,
+          errorObj?.details
+        );
+      }
+      return data as LogIngestResponse;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError("Log ingestion service is currently unreachable.", "INGEST_FAILED", err);
+    }
+  },
+
+  /**
+   * Asynchronously ingest a batch of raw logs into the Kafka stream
+   */
+  async ingestBatch(payload: BatchLogIngestRequest): Promise<BatchLogIngestResponse> {
+    const url = `${getApiBaseUrl()}/api/v1/logs/ingest-batch`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const errorObj = data.detail?.error || data.error;
+        throw new UlpfApiError(
+          errorObj?.message || `Batch ingestion failed with status ${res.status}`,
+          errorObj?.code || `HTTP_${res.status}`,
+          errorObj?.details
+        );
+      }
+      return data as BatchLogIngestResponse;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError("Batch ingestion service is currently unreachable.", "BATCH_INGEST_FAILED", err);
+    }
+  },
+
+  /**
+   * Fetch Kafka streaming cluster health and partition telemetry
+   */
+  async getStreamingHealth(): Promise<StreamingHealthResponse> {
+    const url = `${getApiBaseUrl()}/api/v1/streaming/health`;
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+      });
+      if (!res.ok) {
+        return {
+          status: "DISCONNECTED",
+          enabled: false,
+          bootstrap_servers: "",
+          brokers_count: 0,
+          topics: [],
+          consumer_group: "logforge-ulpf-workers",
+          message: `Streaming health check returned HTTP ${res.status}`,
+        };
+      }
+      return (await res.json()) as StreamingHealthResponse;
+    } catch (err: unknown) {
+      return {
+        status: "DISCONNECTED",
+        enabled: false,
+        bootstrap_servers: "",
+        brokers_count: 0,
+        topics: [],
+        consumer_group: "logforge-ulpf-workers",
+        message: "Unable to reach streaming health endpoint",
+      };
+    }
+  },
 };
+
 
 

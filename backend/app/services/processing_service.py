@@ -22,25 +22,28 @@ class ULPFEngine:
         self.registry = registry or parser_registry
 
     def process_event(
-        self, raw_log: str, source_hint: Optional[str] = None
+        self,
+        raw_log: str,
+        source_hint: Optional[str] = None,
+        event_id: Optional[str] = None,
     ) -> ProcessingResult:
         """Processes a single raw log event into the Universal Event Schema.
         
         Guarantees:
           1. Exact byte preservation of raw_event
           2. SHA-256 cryptographic digest calculation
-          3. Collision-resistant event_id assignment
+          3. Collision-resistant event_id assignment (or preserves pre-assigned event_id)
           4. Zero silent field drop (unmapped fields -> additional_fields)
           5. Structured failure handling without raising unhandled exceptions
         """
         start_time = time.perf_counter()
 
         # Step 1: Input Validation
+        assigned_id = event_id or generate_event_id()
         if raw_log is None or not isinstance(raw_log, str) or not raw_log.strip():
-            event_id = generate_event_id()
             return ProcessingResult(
                 status="failed",
-                event_id=event_id,
+                event_id=assigned_id,
                 format_detected="unknown",
                 normalized_event=None,
                 raw_event=raw_log or "",
@@ -54,9 +57,9 @@ class ULPFEngine:
                 },
             )
 
-        # Step 2: Hashing & ID generation
+        # Step 2: Hashing & ID assignment
         raw_event_hash = compute_sha256(raw_log)
-        event_id = generate_event_id()
+        event_id = assigned_id
 
         # Step 3: Deterministic Format Detection
         format_detected = FormatDetector.detect(raw_log)

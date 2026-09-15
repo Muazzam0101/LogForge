@@ -1,20 +1,33 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Server, ShieldCheck, Cpu, HardDrive, Database, Radio, CheckCircle2, Lock, RefreshCw, Search } from "lucide-react";
+import { Server, ShieldCheck, Cpu, HardDrive, Database, Radio, CheckCircle2, Lock, RefreshCw, Search, Layers } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { ulpfApi } from "@/lib/api/ulpf";
-import { OpenSearchHealth } from "@/lib/api/types";
+import { OpenSearchHealth, StreamingHealthResponse } from "@/lib/api/types";
 
 export default function StatusPage() {
   const [searchHealth, setSearchHealth] = useState<OpenSearchHealth | null>(null);
+  const [streamingHealth, setStreamingHealth] = useState<StreamingHealthResponse | null>(null);
 
   useEffect(() => {
     ulpfApi.getSearchHealth().then(setSearchHealth).catch(() => null);
+    ulpfApi.getStreamingHealth().then(setStreamingHealth).catch(() => null);
   }, []);
 
   const statusServices = [
     { name: "ULPF Parser Engine", state: "Standby", detail: "Grammar parser pool initialized", icon: Cpu, ok: true },
+    { 
+      name: "Apache Kafka Event Broker", 
+      state: streamingHealth?.status === "CONNECTED" ? "Online" : streamingHealth?.status === "DISABLED" ? "Disabled" : "Standby", 
+      detail: streamingHealth?.status === "CONNECTED"
+        ? `${streamingHealth.brokers_count} Broker(s) active · Consumer group '${streamingHealth.consumer_group}'`
+        : streamingHealth?.status === "DISABLED"
+        ? "Disabled (Direct synchronous ingestion active)"
+        : "Standby / Fallback to local synchronous processing", 
+      icon: Layers, 
+      ok: streamingHealth?.status === "CONNECTED" || streamingHealth?.status === "DISABLED"
+    },
     { name: "SHA-256 Hash Verifier", state: "Online", detail: "Cryptographic digest module ready", icon: Lock, ok: true },
     { name: "Universal Schema Normalizer", state: "Standby", detail: "Common Schema ECS v1.2 loaded", icon: Database, ok: true },
     { 
@@ -32,6 +45,7 @@ export default function StatusPage() {
     { name: "Socket Ingestion Gateway", state: "Standby", detail: "UDP/TCP Port 514 / TLS 6514 ready", icon: Radio, ok: true },
     { name: "Local Disk Spooling", state: "Online", detail: "Fast circular buffer storage ready", icon: HardDrive, ok: true },
   ];
+
   return (
     <div className="space-y-6">
       {/* Header */}

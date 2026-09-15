@@ -259,7 +259,7 @@ def test_search_events_opensearch_success(db_session: Session):
     service = SearchService(client_manager=mock_manager, repository=repo)
 
     with patch.object(settings, "OPENSEARCH_ENABLED", True):
-        res = service.search_events(db=db_session, q="test", limit=10)
+        res = service.search_events(db=db_session, engine="opensearch", q="test", limit=10)
         assert res.total == 1
         assert res.search_engine == "opensearch"
         assert len(res.events) == 1
@@ -287,8 +287,9 @@ def test_search_events_fallback_to_mysql_when_offline(db_session: Session):
     service = SearchService(client_manager=mock_manager)
 
     with patch.object(settings, "OPENSEARCH_ENABLED", True):
-        res = service.search_events(db=db_session, limit=10)
+        res = service.search_events(db=db_session, engine="opensearch", limit=10)
         assert res.search_engine == "mysql_fallback"
+
         assert res.total >= 1
         found = any(e.event_id == "mysql-fallback-uuid-1" for e in res.events)
         assert found is True

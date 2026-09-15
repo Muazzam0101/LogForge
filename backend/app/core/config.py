@@ -48,6 +48,20 @@ class Settings(BaseSettings):
     OPENSEARCH_USE_SSL: bool = False
     OPENSEARCH_VERIFY_CERTS: bool = False
 
+    # Apache Kafka Streaming Architecture Configuration
+    KAFKA_ENABLED: bool = False
+    KAFKA_BOOTSTRAP_SERVERS: str = "localhost:9092"
+    KAFKA_LOG_TOPIC: str = "logforge.raw-events"
+    KAFKA_DLQ_TOPIC: str = "logforge.dead-letter"
+    KAFKA_CONSUMER_GROUP: str = "logforge-ulpf-workers"
+    KAFKA_BATCH_SIZE: int = 100
+    KAFKA_NUM_PARTITIONS: int = 3
+    KAFKA_REPLICATION_FACTOR: int = 1
+    KAFKA_MAX_RETRIES: int = 3
+    KAFKA_RETRY_BACKOFF_MS: int = 1000
+    KAFKA_SECURITY_PROTOCOL: str = "PLAINTEXT"
+    KAFKA_CLIENT_ID: str = "logforge-producer"
+
 
 settings = Settings()
 

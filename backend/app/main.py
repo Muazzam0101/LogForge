@@ -1,16 +1,20 @@
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from fastapi import FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
-from .api.routes import analytics, health, integrity, logs, ml, search
+
+from .api.routes import analytics, health, integrity, logs, ml, search, streaming
 
 from .core.config import settings
 from .core.logging import logger
 from .search.service import search_service
+from .streaming.admin import kafka_admin_service
+from .streaming.producer import kafka_producer_service
 
 
 @asynccontextmanager
@@ -21,8 +25,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             search_service.initialize_index()
         except Exception as exc:
             logger.warning("OpenSearch index initialization deferred: %s", exc)
+    if settings.KAFKA_ENABLED:
+        try:
+            kafka_admin_service.ensure_topics()
+        except Exception as exc:
+            logger.warning("Kafka topic initialization deferred: %s", exc)
     yield
+    try:
+        kafka_producer_service.flush(timeout=2.0)
+    except Exception:
+        pass
     logger.info("LogForge ULPF Engine shut down cleanly")
+
 
 
 app = FastAPI(
@@ -62,10 +76,11 @@ async def validation_exception_handler(
             "error": {
                 "code": "REQUEST_VALIDATION_ERROR",
                 "message": "Request payload validation failed",
-                "details": exc.errors(),
+                "details": jsonable_encoder(exc.errors()),
             },
         },
     )
+
 
 
 @app.exception_handler(SQLAlchemyError)
@@ -111,5 +126,7 @@ app.include_router(analytics.router, prefix=settings.API_V1_PREFIX)
 app.include_router(ml.router, prefix=settings.API_V1_PREFIX)
 app.include_router(integrity.router, prefix=settings.API_V1_PREFIX)
 app.include_router(search.router, prefix=settings.API_V1_PREFIX)
+app.include_router(streaming.router, prefix=settings.API_V1_PREFIX)
+
 
 

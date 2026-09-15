@@ -11,6 +11,15 @@ from .event import (
     ProcessingResult,
 )
 from .ingestion import LogProcessRequest, BatchLogProcessRequest
+from .streaming import (
+    LogIngestRequest,
+    LogIngestResponse,
+    BatchLogIngestItem,
+    BatchLogIngestRequest,
+    BatchLogIngestResponse,
+    StreamingHealthResponse,
+    StreamingTopicInfo,
+)
 from .response import ErrorDetail, ErrorResponse, HealthResponse, BatchProcessResponse
 
 __all__ = [
@@ -24,8 +33,16 @@ __all__ = [
     "ProcessingResult",
     "LogProcessRequest",
     "BatchLogProcessRequest",
+    "LogIngestRequest",
+    "LogIngestResponse",
+    "BatchLogIngestItem",
+    "BatchLogIngestRequest",
+    "BatchLogIngestResponse",
+    "StreamingHealthResponse",
+    "StreamingTopicInfo",
     "ErrorDetail",
     "ErrorResponse",
     "HealthResponse",
     "BatchProcessResponse",
 ]
+

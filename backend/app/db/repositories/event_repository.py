@@ -16,9 +16,14 @@ class EventRepository:
     def create_from_processing_result(
         db: Session, result: ProcessingResult
     ) -> Optional[EventModel]:
-        """Maps a successful ULPF ProcessingResult into an EventModel and persists it."""
+        """Maps a successful ULPF ProcessingResult into an EventModel and persists it idempotently."""
         if result.status != "success":
             return None
+
+        # Idempotency: skip insertion if event_id already exists (duplicate redelivery)
+        existing = db.execute(select(EventModel).where(EventModel.event_id == result.event_id)).scalar_one_or_none()
+        if existing:
+            return existing
 
         norm = result.normalized_event
 
@@ -62,11 +67,20 @@ class EventRepository:
     def create_batch_from_results(
         db: Session, results: List[ProcessingResult]
     ) -> List[EventModel]:
-        """Persists a batch of successful ULPF ProcessingResults in a single transaction."""
-        models: List[EventModel] = []
+        """Persists a batch of successful ULPF ProcessingResults in a single transaction idempotently."""
+        successful_results = [r for r in results if r.status == "success"]
+        if not successful_results:
+            return []
 
-        for res in results:
-            if res.status != "success":
+        # Idempotency: Query already existing event_ids in bulk
+        candidate_ids = [r.event_id for r in successful_results]
+        existing_ids = set(
+            db.scalars(select(EventModel.event_id).where(EventModel.event_id.in_(candidate_ids))).all()
+        )
+
+        models: List[EventModel] = []
+        for res in successful_results:
+            if res.event_id in existing_ids:
                 continue
 
             norm = res.normalized_event
