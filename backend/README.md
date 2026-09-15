@@ -323,3 +323,39 @@ BLOCKCHAIN_NETWORK=hardhat-local
 
 ### Offline / Air-Gapped Mode
 If `BLOCKCHAIN_ENABLED=false` (the default), LogForge uses the `DisabledBlockchainAdapter`. All cryptographic SHA-256 hashing, hash chains, and Merkle tree generation execute locally with zero external network connectivity required.
+
+---
+
+## 10. OpenSearch Scalability Layer
+
+LogForge incorporates OpenSearch as a distributed search, multi-criteria filtering, and analytics projection layer, while maintaining MySQL as the immutable source of truth:
+
+### Core Concepts
+- **MySQL = System of Record:** Every raw event string, normalized JSON representation, and SHA-256 digest is permanently committed to MySQL.
+- **OpenSearch = High-Speed Query Engine:** Pre-indexed search projection enabling full-text queries, multi-criteria boolean filtering, and aggregations across millions of events.
+- **Zero Ingestion Failures:** OpenSearch downtime or connection timeouts will **never** cause log ingestion (`/process` or `/batch`) to fail. Events persist safely to MySQL first; OpenSearch indexing is performed non-blockingly.
+- **Field Explosion Prevention:** Mappings enforce `dynamic: "false"`. Dynamic keys inside `additional_fields` are stored as JSON objects without expanding the OpenSearch cluster mapping.
+- **Transparent Fallback:** If `OPENSEARCH_ENABLED=false` or OpenSearch becomes unreachable, search queries automatically execute against MySQL (`EventRepository.get_events`) without throwing errors to clients.
+
+### OpenSearch API Reference
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/search/events` | Filtered search with full-text matching, time ranges, and `search_after` deep pagination |
+| `GET` | `/api/v1/search/health` | Cluster availability, shard allocation status, index alias state, and document count |
+| `POST` | `/api/v1/search/reindex` | Administrative streaming bulk reindex from MySQL into OpenSearch |
+
+### Local OpenSearch Setup
+
+To launch OpenSearch via Docker Compose:
+```bash
+docker-compose up -d opensearch
+```
+
+Configure `backend/.env`:
+```env
+OPENSEARCH_ENABLED=true
+OPENSEARCH_URL=http://localhost:9200
+OPENSEARCH_INDEX=logforge-events
+OPENSEARCH_BULK_SIZE=500
+```

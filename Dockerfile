@@ -10,8 +10,12 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build production bundle
+# Build arguments and environment variables
+ARG NEXT_PUBLIC_ULPF_API_URL=http://localhost:8000
+ENV NEXT_PUBLIC_ULPF_API_URL=$NEXT_PUBLIC_ULPF_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Build production bundle
 RUN npm run build
 
 # Runner stage
@@ -21,6 +25,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
+ARG NEXT_PUBLIC_ULPF_API_URL=http://localhost:8000
+ENV NEXT_PUBLIC_ULPF_API_URL=$NEXT_PUBLIC_ULPF_API_URL
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \

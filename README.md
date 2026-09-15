@@ -187,6 +187,9 @@ LogForge leverages **MySQL / PostgreSQL** with **SQLAlchemy 2.x** and **Alembic*
 | `GET` | `/api/v1/integrity/batches` | List all historical cryptographic Merkle batches and verification states |
 | `GET` | `/api/v1/integrity/batches/{batch_id}` | Inspect Merkle batch root, event count, and on-chain transaction metadata |
 | `POST` | `/api/v1/integrity/chain/verify` | Sequentially audit tamper-evident hash chain continuity across stored events |
+| `GET` | `/api/v1/search/events` | High-speed distributed search, full-text exploration, multi-criteria filters, search_after |
+| `GET` | `/api/v1/search/health` | OpenSearch cluster health, shard allocation, index alias status, doc counts |
+| `POST` | `/api/v1/search/reindex` | Administrative streaming bulk reindex from authoritative MySQL into OpenSearch |
 
 ---
 
@@ -285,4 +288,80 @@ LogForge supports local EVM nodes (Ganache, Hardhat, Anvil) or private consortia
 
 3. **Air-Gapped / Offline Operation:**
    When `BLOCKCHAIN_ENABLED=false` (default), LogForge operates in pure offline mode. All cryptographic SHA-256 hashing, hash chaining, and Merkle tree generation function seamlessly with zero network overhead.
+
+---
+
+## 🔍 OpenSearch Scalability Layer (Phase 9)
+
+LogForge implements a dual-layer storage architecture separating authoritative persistence from high-speed search and aggregation:
+
+```text
+                    ┌──────────────────┐
+                    │    Next.js UI    │ (Logs Explorer, Analytics, System Health)
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │  FastAPI Engine  │ (/api/v1/search/*)
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │  ULPF Normalizer │ (Universal Event Schema)
+                    └────────┬─────────┘
+                             │
+                ┌────────────┴────────────┐
+                ▼                         ▼
+        ┌──────────────┐          ┌──────────────┐
+        │  MySQL 8.0   │          │  OpenSearch  │ (Distributed Search Index:
+        │Source ofTruth│          │ Search/Stats │  logforge-events-v1 -> alias)
+        └──────┬───────┘          └──────┬───────┘
+               │                         │
+               ▼                         ▼
+        Forensic Audit             Fast Full-Text,
+        & Blockchain               Filter Aggregations,
+        Integrity Anchor           Deep Pagination
+```
+
+### Architectural Principles: MySQL vs OpenSearch
+
+- **MySQL (System of Record):** Immutable, authoritative primary persistence. Losslessly retains byte-for-byte exact `raw_event` strings, normalized event JSON, unmapped vendor extensions, and cryptographic SHA-256 hashes. If OpenSearch ever loses data or corrupts an index, MySQL is the ground truth.
+- **OpenSearch (Search & Analytics Projection):** High-speed read index optimized for complex boolean filtering, full-text queries across message/raw logs, rapid time-series aggregations, and `search_after` deep pagination.
+- **Zero Ingestion Failures:** Ingestion throughput is decoupled from OpenSearch cluster state. If OpenSearch is slow or offline, events are committed to MySQL, and OpenSearch indexing fails safely without blocking ingestion.
+- **Prevention of Field Explosion:** Mappings enforce `dynamic: "false"`. Dynamic sub-attributes in `additional_fields` are stored as objects without expanding the cluster cluster state field limit.
+
+### Index Lifecycle & Alias Strategy
+
+- **Underlying Index:** `logforge-events-v1`
+- **Application Query Alias:** `logforge-events`
+- Allows zero-downtime reindexing and index rotation (e.g. `logforge-events-v2` can be swapped atomically behind the alias).
+
+### Transparent Fallback Mode
+
+When `OPENSEARCH_ENABLED=false` or if the OpenSearch cluster is unreachable:
+1. Search queries (`GET /api/v1/search/events`) transparently fall back to MySQL (`EventRepository.get_events`).
+2. The response includes `search_engine: "mysql_fallback"` so callers and UI components can render operational indicators without interruption.
+3. System Health page displays `OpenSearch: Disconnected (Fallback Active)`.
+
+### Local & Docker Deployment
+
+1. **Start with Docker Compose:**
+   ```bash
+   docker-compose up -d opensearch
+   ```
+   Configured with single-node discovery, 512MB heap limit (`-Xms512m -Xmx512m`), and disabled security plugin for local dev.
+
+2. **Environment Configuration (`backend/.env`):**
+   ```env
+   OPENSEARCH_ENABLED=true
+   OPENSEARCH_URL=http://localhost:9200
+   OPENSEARCH_INDEX=logforge-events
+   OPENSEARCH_BULK_SIZE=500
+   ```
+
+3. **Reindex from Authoritative Storage:**
+   To populate or rebuild OpenSearch from existing MySQL events:
+   ```bash
+   curl -X POST http://127.0.0.1:8000/api/v1/search/reindex -H "Content-Type: application/json" -d '{"batch_size": 500}'
+   ```
 

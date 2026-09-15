@@ -157,12 +157,16 @@ export interface LogListResponse {
   total: number;
   limit: number;
   offset: number;
+  page?: number;
   events: StoredEventSummary[];
+  search_engine?: "opensearch" | "mysql" | "mysql_fallback" | string;
+  search_after?: string | null;
 }
 
 export interface LogQueryParams {
   limit?: number;
   offset?: number;
+  engine?: "mysql" | "opensearch" | "auto";
   q?: string;
   event_id?: string;
   detected_format?: string;
@@ -173,6 +177,28 @@ export interface LogQueryParams {
   protocol?: string;
   start_time?: string;
   end_time?: string;
+  search_after?: string;
+}
+
+export interface OpenSearchHealth {
+  status: "CONNECTED" | "DISCONNECTED" | "DISABLED" | "DEGRADED" | string;
+  enabled: boolean;
+  cluster_name?: string;
+  cluster_status?: string;
+  index_name?: string;
+  alias_name?: string;
+  index_exists?: boolean;
+  document_count?: number;
+  message?: string;
+}
+
+export interface ReindexResponse {
+  status: string;
+  total_mysql_events: number;
+  indexed_documents: number;
+  failed_documents: number;
+  duration_seconds: number;
+  message?: string;
 }
 
 export type LogFormatFilter = "" | "json" | "cef" | "syslog" | "unknown";

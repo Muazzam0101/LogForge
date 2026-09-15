@@ -24,6 +24,8 @@ import {
   IntegrityBatch,
   IntegrityRecord,
   IntegritySummary,
+  OpenSearchHealth,
+  ReindexResponse,
 } from "./types";
 
 
@@ -176,12 +178,14 @@ export const ulpfApi = {
   },
 
   /**
-   * Query persisted log events with pagination and filters
+   * Query persisted log events with pagination, full-text search, and filters.
+   * Utilizes high-performance OpenSearch backend with automatic server-side MySQL fallback.
    */
   async getLogs(params: LogQueryParams = {}): Promise<LogListResponse> {
     const searchParams = new URLSearchParams();
     if (params.limit !== undefined) searchParams.set("limit", params.limit.toString());
     if (params.offset !== undefined) searchParams.set("offset", params.offset.toString());
+    searchParams.set("engine", params.engine || "mysql");
     if (params.q) searchParams.set("q", params.q);
     if (params.event_id) searchParams.set("event_id", params.event_id);
     if (params.detected_format) searchParams.set("detected_format", params.detected_format);
@@ -190,18 +194,29 @@ export const ulpfApi = {
     if (params.source_ip) searchParams.set("source_ip", params.source_ip);
     if (params.destination_ip) searchParams.set("destination_ip", params.destination_ip);
     if (params.protocol) searchParams.set("protocol", params.protocol);
-    if (params.start_time) searchParams.set("start_time", params.start_time);
-    if (params.end_time) searchParams.set("end_time", params.end_time);
+    if (params.start_time) searchParams.set("from", params.start_time);
+    if (params.end_time) searchParams.set("to", params.end_time);
+    if (params.search_after) searchParams.set("search_after", params.search_after);
 
     const queryStr = searchParams.toString();
-    const url = `${getApiBaseUrl()}/api/v1/logs${queryStr ? `?${queryStr}` : ""}`;
+    const primaryUrl = `${getApiBaseUrl()}/api/v1/search/events${queryStr ? `?${queryStr}` : ""}`;
+    const fallbackUrl = `${getApiBaseUrl()}/api/v1/logs${queryStr ? `?${queryStr}` : ""}`;
 
     try {
-      const res = await fetch(url, {
+      let res = await fetch(primaryUrl, {
         method: "GET",
         headers: { Accept: "application/json" },
         cache: "no-store",
       });
+
+      // If search endpoint is not found (e.g. proxy mismatch), fall back to legacy logs endpoint
+      if (res.status === 404) {
+        res = await fetch(fallbackUrl, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+        });
+      }
 
       const data = await res.json();
       if (!res.ok) {
@@ -217,7 +232,7 @@ export const ulpfApi = {
     } catch (err: unknown) {
       if (err instanceof UlpfApiError) throw err;
       throw new UlpfApiError(
-        "Unable to fetch logs from LogForge persistence store.",
+        "Unable to fetch logs from LogForge search and persistence store.",
         "DATABASE_UNAVAILABLE",
         err
       );
@@ -739,6 +754,61 @@ export const ulpfApi = {
     } catch (err: unknown) {
       if (err instanceof UlpfApiError) throw err;
       throw new UlpfApiError("Unable to verify hash chain.", "CHAIN_VERIFICATION_FAILED", err);
+    }
+  },
+
+  /**
+   * Query OpenSearch cluster and index health status
+   */
+  async getSearchHealth(): Promise<OpenSearchHealth> {
+    const url = `${getApiBaseUrl()}/api/v1/search/health`;
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        return {
+          status: "DISCONNECTED",
+          enabled: false,
+          message: `OpenSearch health check returned HTTP ${res.status}`,
+        };
+      }
+      return (await res.json()) as OpenSearchHealth;
+    } catch (err) {
+      return {
+        status: "DISCONNECTED",
+        enabled: false,
+        message: "Backend search service unreachable",
+      };
+    }
+  },
+
+  /**
+   * Trigger administrative reindex from MySQL into OpenSearch
+   */
+  async reindexSearch(batchSize: number = 500): Promise<ReindexResponse> {
+    const url = `${getApiBaseUrl()}/api/v1/search/reindex`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ batch_size: batchSize }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const errorObj = data.detail?.error || data.error;
+        throw new UlpfApiError(
+          errorObj?.message || `Reindex failed with HTTP ${res.status}`,
+          errorObj?.code || `HTTP_${res.status}`,
+          errorObj?.details
+        );
+      }
+      return data as ReindexResponse;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError("Unable to trigger OpenSearch reindex.", "REINDEX_FAILED", err);
     }
   },
 };

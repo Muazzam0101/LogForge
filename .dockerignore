@@ -1,0 +1,10 @@
+node_modules
+.next
+backend
+.git
+.gitignore
+.env.local
+*.log
+docker
+.pytest_cache
+*.tsbuildinfo

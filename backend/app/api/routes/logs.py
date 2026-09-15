@@ -16,6 +16,7 @@ from ...schemas.event import ProcessingResult
 from ...schemas.explorer import EventDetailResponse, EventListResponse, EventSummaryItem
 from ...schemas.ingestion import BatchLogProcessRequest, LogProcessRequest
 from ...schemas.response import BatchProcessResponse, ErrorResponse
+from ...search.service import search_service
 from ...services.processing_service import ULPFEngine
 from ..dependencies import get_database, get_ulpf_engine
 
@@ -100,6 +101,12 @@ def process_log(
     except Exception as integ_err:
         logger.warning("Integrity record creation skipped for %s: %s", result.event_id, str(integ_err))
 
+    # 2c. Non-blocking OpenSearch Scalability Layer Indexing
+    try:
+        search_service.index_event_safely(result)
+    except Exception as search_err:
+        logger.warning("Non-blocking OpenSearch indexing skipped for %s: %s", result.event_id, str(search_err))
+
     # 3. Non-blocking AI/ML Anomaly Scoring
 
     try:
@@ -181,6 +188,12 @@ def process_batch(
                     IntegrityService.create_integrity_record(db, r.event_id, r.raw_event_hash)
         except Exception as integ_err:
             logger.warning("Batch integrity records creation skipped: %s", str(integ_err))
+
+        # 2c. Non-blocking OpenSearch Scalability Layer Bulk Indexing
+        try:
+            search_service.index_batch_safely(results)
+        except Exception as search_err:
+            logger.warning("Non-blocking OpenSearch batch indexing skipped: %s", str(search_err))
 
         # 3. Non-blocking AI/ML Batch Anomaly Scoring
         try:

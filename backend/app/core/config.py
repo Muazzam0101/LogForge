@@ -36,6 +36,18 @@ class Settings(BaseSettings):
     BLOCKCHAIN_PRIVATE_KEY: str = ""
     BLOCKCHAIN_NETWORK: str = "local-evm"
 
+    # OpenSearch Scalability & Search Layer Configuration
+    OPENSEARCH_ENABLED: bool = False
+    OPENSEARCH_URL: str = "http://localhost:9200"
+    OPENSEARCH_INDEX: str = "logforge-events"
+    OPENSEARCH_BULK_SIZE: int = 500
+    OPENSEARCH_TIMEOUT: int = 10
+    OPENSEARCH_MAX_RETRIES: int = 3
+    OPENSEARCH_AUTH_USER: str | None = None
+    OPENSEARCH_AUTH_PASSWORD: str | None = None
+    OPENSEARCH_USE_SSL: bool = False
+    OPENSEARCH_VERIFY_CERTS: bool = False
+
 
 settings = Settings()
 

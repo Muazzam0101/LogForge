@@ -50,6 +50,11 @@ function ExplorerContent() {
   // Data state
   const [events, setEvents] = useState<StoredEventSummary[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [selectedEngine, setSelectedEngine] = useState<"mysql" | "opensearch">(() => {
+    const paramEngine = searchParams.get("engine");
+    return paramEngine === "opensearch" ? "opensearch" : "mysql";
+  });
+  const [searchEngine, setSearchEngine] = useState<string>("mysql");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,8 +72,9 @@ function ExplorerContent() {
 
   // Synchronize state with URL query parameters
   const updateUrlParams = useCallback(
-    (currentFilters: LogFilterState, currentPage: number) => {
+    (currentFilters: LogFilterState, currentPage: number, currentEngine: "mysql" | "opensearch") => {
       const params = new URLSearchParams();
+      if (currentEngine === "opensearch") params.set("engine", "opensearch");
       if (currentFilters.q) params.set("q", currentFilters.q);
       if (currentFilters.detected_format) params.set("format", currentFilters.detected_format);
       if (currentFilters.severity) params.set("severity", currentFilters.severity);
@@ -87,7 +93,7 @@ function ExplorerContent() {
     [pathname]
   );
 
-  // Fetch real database records from backend GET /api/v1/logs
+  // Fetch real database records from backend
   const fetchLogs = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -96,6 +102,7 @@ function ExplorerContent() {
       const queryParams: LogQueryParams = {
         limit: PAGE_SIZE,
         offset: page * PAGE_SIZE,
+        engine: selectedEngine,
       };
 
       if (filters.q.trim()) queryParams.q = filters.q.trim();
@@ -111,7 +118,8 @@ function ExplorerContent() {
       const res = await ulpfApi.getLogs(queryParams);
       setEvents(res.events);
       setTotalCount(res.total);
-      updateUrlParams(filters, page);
+      setSearchEngine(res.search_engine || selectedEngine);
+      updateUrlParams(filters, page, selectedEngine);
     } catch (err: unknown) {
       if (err instanceof UlpfApiError) {
         setError(`[${err.code}] ${err.message}`);
@@ -123,7 +131,7 @@ function ExplorerContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [filters, page, updateUrlParams]);
+  }, [filters, page, selectedEngine, updateUrlParams]);
 
   useEffect(() => {
     fetchLogs();
@@ -167,7 +175,12 @@ function ExplorerContent() {
     setSearchQuery("");
     setFilters(reset);
     setPage(0);
-    updateUrlParams(reset, 0);
+    updateUrlParams(reset, 0, selectedEngine);
+  };
+
+  const handleSelectEngine = (engine: "mysql" | "opensearch") => {
+    setSelectedEngine(engine);
+    setPage(0);
   };
 
   // Inspect Event Details modal
@@ -215,6 +228,9 @@ function ExplorerContent() {
           isLoading={isLoading}
           onRefresh={fetchLogs}
           onOpenUpload={openUploadModal}
+          searchEngine={searchEngine}
+          selectedEngine={selectedEngine}
+          onSelectEngine={handleSelectEngine}
         />
       </ScrollReveal>
 
@@ -235,16 +251,27 @@ function ExplorerContent() {
         <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-xs text-rose-800">
           <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
           <div className="flex-1">
-            <span className="font-bold">Database Error: </span>
+            <span className="font-bold">Search Error: </span>
             <span>{error}</span>
           </div>
-          <button
-            type="button"
-            onClick={fetchLogs}
-            className="text-xs font-semibold text-rose-700 hover:text-rose-900 underline cursor-pointer"
-          >
-            Retry
-          </button>
+          <div className="flex items-center gap-3">
+            {selectedEngine === "opensearch" && (
+              <button
+                type="button"
+                onClick={() => handleSelectEngine("mysql")}
+                className="text-xs font-semibold text-orange-700 hover:text-orange-900 underline cursor-pointer"
+              >
+                Switch to MySQL
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={fetchLogs}
+              className="text-xs font-semibold text-rose-700 hover:text-rose-900 underline cursor-pointer"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       )}
 

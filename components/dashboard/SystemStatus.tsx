@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
-import { Cpu, Database, Brain, HardDrive, ShieldCheck, CheckCircle2, AlertCircle } from "lucide-react";
-import { HealthResponse } from "@/lib/api/types";
+import React, { useState, useEffect } from "react";
+import { Cpu, Database, Brain, HardDrive, ShieldCheck, CheckCircle2, AlertCircle, Search } from "lucide-react";
+import { HealthResponse, OpenSearchHealth } from "@/lib/api/types";
+import { ulpfApi } from "@/lib/api/ulpf";
 
 interface SystemStatusProps {
   health: HealthResponse | null;
@@ -10,6 +11,12 @@ interface SystemStatusProps {
 }
 
 export function SystemStatus({ health, isLoading }: SystemStatusProps) {
+  const [searchHealth, setSearchHealth] = useState<OpenSearchHealth | null>(null);
+
+  useEffect(() => {
+    ulpfApi.getSearchHealth().then(setSearchHealth).catch(() => null);
+  }, []);
+
   const isOnline = health?.status === "healthy";
   const parserCount = health?.registered_parsers.length || 0;
 
@@ -25,6 +32,18 @@ export function SystemStatus({ health, isLoading }: SystemStatusProps) {
       icon: Database,
       status: isLoading ? "Checking..." : isOnline ? "Connected" : "Unreachable",
       isLive: isOnline,
+    },
+    {
+      name: "OpenSearch Distributed Index",
+      icon: Search,
+      status: !searchHealth
+        ? "Checking..."
+        : searchHealth.status === "CONNECTED"
+        ? `Connected (${searchHealth.document_count || 0} Docs)`
+        : searchHealth.status === "DISABLED"
+        ? "Disabled (MySQL Primary)"
+        : "Disconnected (Fallback Active)",
+      isLive: searchHealth?.status === "CONNECTED",
     },
     {
       name: "Deterministic Parsers",

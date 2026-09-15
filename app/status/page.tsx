@@ -1,19 +1,37 @@
 "use client";
 
-import React from "react";
-import { Server, ShieldCheck, Cpu, HardDrive, Database, Radio, CheckCircle2, Lock, RefreshCw } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Server, ShieldCheck, Cpu, HardDrive, Database, Radio, CheckCircle2, Lock, RefreshCw, Search } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
-
-const statusServices = [
-  { name: "ULPF Parser Engine", state: "Standby", detail: "Grammar parser pool initialized", icon: Cpu, ok: true },
-  { name: "SHA-256 Hash Verifier", state: "Online", detail: "Cryptographic digest module ready", icon: Lock, ok: true },
-  { name: "Universal Schema Normalizer", state: "Standby", detail: "Common Schema ECS v1.2 loaded", icon: Database, ok: true },
-  { name: "Air-gapped Network Guard", state: "Active", detail: "Outbound telemetry egress blocked", icon: ShieldCheck, ok: true },
-  { name: "Socket Ingestion Gateway", state: "Standby", detail: "UDP/TCP Port 514 / TLS 6514 ready", icon: Radio, ok: true },
-  { name: "Local Disk Spooling", state: "Online", detail: "Fast circular buffer storage ready", icon: HardDrive, ok: true },
-];
+import { ulpfApi } from "@/lib/api/ulpf";
+import { OpenSearchHealth } from "@/lib/api/types";
 
 export default function StatusPage() {
+  const [searchHealth, setSearchHealth] = useState<OpenSearchHealth | null>(null);
+
+  useEffect(() => {
+    ulpfApi.getSearchHealth().then(setSearchHealth).catch(() => null);
+  }, []);
+
+  const statusServices = [
+    { name: "ULPF Parser Engine", state: "Standby", detail: "Grammar parser pool initialized", icon: Cpu, ok: true },
+    { name: "SHA-256 Hash Verifier", state: "Online", detail: "Cryptographic digest module ready", icon: Lock, ok: true },
+    { name: "Universal Schema Normalizer", state: "Standby", detail: "Common Schema ECS v1.2 loaded", icon: Database, ok: true },
+    { 
+      name: "OpenSearch Distributed Index", 
+      state: searchHealth?.status === "CONNECTED" ? "Online" : searchHealth?.status === "DISABLED" ? "Disabled" : "Standby", 
+      detail: searchHealth?.status === "CONNECTED"
+        ? `Alias: ${searchHealth.alias_name || "logforge-events"} (${searchHealth.document_count || 0} docs)`
+        : searchHealth?.status === "DISABLED"
+        ? "MySQL authoritative persistence active"
+        : "OpenSearch offline (MySQL fallback active)", 
+      icon: Search, 
+      ok: searchHealth?.status === "CONNECTED" || searchHealth?.status === "DISABLED"
+    },
+    { name: "Air-gapped Network Guard", state: "Active", detail: "Outbound telemetry egress blocked", icon: ShieldCheck, ok: true },
+    { name: "Socket Ingestion Gateway", state: "Standby", detail: "UDP/TCP Port 514 / TLS 6514 ready", icon: Radio, ok: true },
+    { name: "Local Disk Spooling", state: "Online", detail: "Fast circular buffer storage ready", icon: HardDrive, ok: true },
+  ];
   return (
     <div className="space-y-6">
       {/* Header */}

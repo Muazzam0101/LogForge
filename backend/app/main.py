@@ -6,15 +6,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
-from .api.routes import analytics, health, integrity, logs, ml
+from .api.routes import analytics, health, integrity, logs, ml, search
 
 from .core.config import settings
 from .core.logging import logger
+from .search.service import search_service
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("LogForge ULPF Engine v%s initialized successfully", settings.VERSION)
+    if settings.OPENSEARCH_ENABLED:
+        try:
+            search_service.initialize_index()
+        except Exception as exc:
+            logger.warning("OpenSearch index initialization deferred: %s", exc)
     yield
     logger.info("LogForge ULPF Engine shut down cleanly")
 
@@ -104,5 +110,6 @@ app.include_router(logs.router, prefix=settings.API_V1_PREFIX)
 app.include_router(analytics.router, prefix=settings.API_V1_PREFIX)
 app.include_router(ml.router, prefix=settings.API_V1_PREFIX)
 app.include_router(integrity.router, prefix=settings.API_V1_PREFIX)
+app.include_router(search.router, prefix=settings.API_V1_PREFIX)
 
 
