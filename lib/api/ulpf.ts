@@ -1,5 +1,4 @@
 import {
-  ApiClientError,
   AnalyticsDistributions,
   AnalyticsOverview,
   AnalyticsSummary,
@@ -22,7 +21,6 @@ import {
   EventBlockchainInfo,
   EventVerificationResult,
   IntegrityBatch,
-  IntegrityRecord,
   IntegritySummary,
   OpenSearchHealth,
   ReindexResponse,
@@ -37,9 +35,9 @@ import {
   Role,
   UserCreateRequest,
   UserUpdateRequest,
-  AuditLogItem,
   AuditListResponse,
   AuditQueryParams,
+  SystemPerformanceMetrics,
 } from "./types";
 
 
@@ -827,7 +825,7 @@ export const ulpfApi = {
         };
       }
       return (await res.json()) as OpenSearchHealth;
-    } catch (err) {
+    } catch {
       return {
         status: "DISCONNECTED",
         enabled: false,
@@ -939,7 +937,7 @@ export const ulpfApi = {
         };
       }
       return (await res.json()) as StreamingHealthResponse;
-    } catch (err: unknown) {
+    } catch {
       return {
         status: "DISCONNECTED",
         enabled: false,
@@ -1191,6 +1189,55 @@ export const ulpfApi = {
     } catch (err: unknown) {
       if (err instanceof UlpfApiError) throw err;
       throw new UlpfApiError("Audit log service unreachable.", "AUDIT_FETCH_FAILED", err);
+    }
+  },
+
+  /**
+   * Fetch real-time system performance and throughput telemetry
+   */
+  async getPerformanceMetrics(): Promise<SystemPerformanceMetrics> {
+    const url = `${getApiBaseUrl()}/api/v1/system/performance`;
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: getAuthHeaders(),
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new UlpfApiError(
+          data.detail?.message || data.detail || "Failed to fetch performance telemetry",
+          `HTTP_${res.status}`
+        );
+      }
+      return data as SystemPerformanceMetrics;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError("Performance telemetry service unreachable.", "PERFORMANCE_FETCH_FAILED", err);
+    }
+  },
+
+  /**
+   * Reset performance metrics telemetry counters for benchmark testing
+   */
+  async resetPerformanceMetrics(): Promise<{ status: string; message: string }> {
+    const url = `${getApiBaseUrl()}/api/v1/system/performance/reset`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new UlpfApiError(
+          data.detail?.message || data.detail || "Failed to reset performance telemetry",
+          `HTTP_${res.status}`
+        );
+      }
+      return data;
+    } catch (err: unknown) {
+      if (err instanceof UlpfApiError) throw err;
+      throw new UlpfApiError("Performance reset service unreachable.", "PERFORMANCE_RESET_FAILED", err);
     }
   },
 };

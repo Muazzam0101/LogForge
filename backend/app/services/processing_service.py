@@ -9,6 +9,9 @@ from ..utils.hashing import compute_sha256
 from ..utils.ids import generate_event_id
 
 
+from ..core.metrics import metrics_collector
+
+
 class ULPFEngine:
     """Universal Log Pre-processing Framework (ULPF) Core Engine.
     
@@ -35,12 +38,23 @@ class ULPFEngine:
           3. Collision-resistant event_id assignment (or preserves pre-assigned event_id)
           4. Zero silent field drop (unmapped fields -> additional_fields)
           5. Structured failure handling without raising unhandled exceptions
+          6. High-precision stage-by-stage execution profiling
         """
         start_time = time.perf_counter()
+        metrics_collector.record_event_received(1)
+
+        stage_timings: Dict[str, float] = {
+            "format_detection": 0.0,
+            "parsing": 0.0,
+            "normalization": 0.0,
+            "schema_validation": 0.0,
+        }
 
         # Step 1: Input Validation
         assigned_id = event_id or generate_event_id()
         if raw_log is None or not isinstance(raw_log, str) or not raw_log.strip():
+            total_time_ms = round((time.perf_counter() - start_time) * 1000, 3)
+            metrics_collector.record_event_failed(1)
             return ProcessingResult(
                 status="failed",
                 event_id=assigned_id,
@@ -49,7 +63,8 @@ class ULPFEngine:
                 raw_event=raw_log or "",
                 raw_event_hash=compute_sha256(raw_log or ""),
                 processing_metadata=ProcessingMetadata(
-                    processing_time_ms=round((time.perf_counter() - start_time) * 1000, 3)
+                    processing_time_ms=total_time_ms,
+                    stage_timings_ms=stage_timings,
                 ),
                 error={
                     "code": "EMPTY_OR_INVALID_INPUT",
@@ -58,12 +73,19 @@ class ULPFEngine:
             )
 
         # Step 2: Hashing & ID assignment
+        hashing_start = time.perf_counter()
         raw_event_hash = compute_sha256(raw_log)
         event_id = assigned_id
+        stage_timings["schema_validation"] += round((time.perf_counter() - hashing_start) * 1000, 3)
 
         # Step 3: Deterministic Format Detection
+        det_start = time.perf_counter()
         format_detected = FormatDetector.detect(raw_log)
+        stage_timings["format_detection"] = round((time.perf_counter() - det_start) * 1000, 3)
+
         if format_detected == "unknown":
+            total_time_ms = round((time.perf_counter() - start_time) * 1000, 3)
+            metrics_collector.record_event_failed(1)
             return ProcessingResult(
                 status="failed",
                 event_id=event_id,
@@ -72,7 +94,8 @@ class ULPFEngine:
                 raw_event=raw_log,
                 raw_event_hash=raw_event_hash,
                 processing_metadata=ProcessingMetadata(
-                    processing_time_ms=round((time.perf_counter() - start_time) * 1000, 3)
+                    processing_time_ms=total_time_ms,
+                    stage_timings_ms=stage_timings,
                 ),
                 error={
                     "code": "INVALID_LOG_FORMAT",
@@ -83,6 +106,8 @@ class ULPFEngine:
         # Step 4: Parser Resolution via Registry
         parser = self.registry.get_parser_for_format(format_detected)
         if not parser:
+            total_time_ms = round((time.perf_counter() - start_time) * 1000, 3)
+            metrics_collector.record_event_failed(1)
             return ProcessingResult(
                 status="failed",
                 event_id=event_id,
@@ -91,7 +116,8 @@ class ULPFEngine:
                 raw_event=raw_log,
                 raw_event_hash=raw_event_hash,
                 processing_metadata=ProcessingMetadata(
-                    processing_time_ms=round((time.perf_counter() - start_time) * 1000, 3)
+                    processing_time_ms=total_time_ms,
+                    stage_timings_ms=stage_timings,
                 ),
                 error={
                     "code": "NO_PARSER_REGISTERED",
@@ -110,6 +136,8 @@ class ULPFEngine:
                 format_detected,
                 str(exc),
             )
+            total_time_ms = round((time.perf_counter() - start_time) * 1000, 3)
+            metrics_collector.record_event_failed(1)
             return ProcessingResult(
                 status="failed",
                 event_id=event_id,
@@ -118,7 +146,8 @@ class ULPFEngine:
                 raw_event=raw_log,
                 raw_event_hash=raw_event_hash,
                 processing_metadata=ProcessingMetadata(
-                    processing_time_ms=round((time.perf_counter() - start_time) * 1000, 3)
+                    processing_time_ms=total_time_ms,
+                    stage_timings_ms=stage_timings,
                 ),
                 error={
                     "code": "PARSER_FAILURE",
@@ -126,8 +155,10 @@ class ULPFEngine:
                 },
             )
         parse_time_ms = round((time.perf_counter() - parse_start) * 1000, 3)
+        stage_timings["parsing"] = parse_time_ms
 
         # Step 6: Normalization into Universal Event Schema
+        norm_start = time.perf_counter()
         normalized_event = EventNormalizer.normalize(
             extracted=extracted_data,
             parser_name=parser.parser_name,
@@ -140,7 +171,15 @@ class ULPFEngine:
             if not normalized_event.device.vendor:
                 normalized_event.device.vendor = source_hint
 
+        stage_timings["normalization"] = round((time.perf_counter() - norm_start) * 1000, 3)
         total_time_ms = round((time.perf_counter() - start_time) * 1000, 3)
+
+        # Record metrics telemetry
+        metrics_collector.record_event_processed(
+            latency_ms=total_time_ms,
+            count=1,
+            stage_breakdown=stage_timings,
+        )
 
         # Step 7: Return lossless outcome
         return ProcessingResult(
@@ -152,6 +191,7 @@ class ULPFEngine:
             raw_event_hash=raw_event_hash,
             processing_metadata=ProcessingMetadata(
                 processing_time_ms=total_time_ms,
+                stage_timings_ms=stage_timings,
             ),
             error=None,
         )
@@ -159,7 +199,7 @@ class ULPFEngine:
     def process_batch(
         self, raw_logs: List[str], source_hint: Optional[str] = None
     ) -> List[ProcessingResult]:
-        """Processes a list of raw log events sequentially (ready for future async/pool)."""
+        """Processes a list of raw log events sequentially with per-event telemetry."""
         return [self.process_event(log, source_hint) for log in raw_logs]
 
 

@@ -20,7 +20,7 @@ EVENT_INDEX_BODY: Dict[str, Any] = {
         "number_of_shards": 1,
         "number_of_replicas": 0,
         "index.mapping.total_fields.limit": 1000,
-        "index.refresh_interval": "1s",
+        "index.refresh_interval": settings.OPENSEARCH_REFRESH_INTERVAL,
     },
     "mappings": {
         "dynamic": "false",

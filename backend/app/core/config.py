@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     OPENSEARCH_URL: str = "http://localhost:9200"
     OPENSEARCH_INDEX: str = "logforge-events"
     OPENSEARCH_BULK_SIZE: int = 500
+    OPENSEARCH_REFRESH_INTERVAL: str = "1s"
     OPENSEARCH_TIMEOUT: int = 10
     OPENSEARCH_MAX_RETRIES: int = 3
     OPENSEARCH_AUTH_USER: str | None = None
@@ -55,12 +56,18 @@ class Settings(BaseSettings):
     KAFKA_DLQ_TOPIC: str = "logforge.dead-letter"
     KAFKA_CONSUMER_GROUP: str = "logforge-ulpf-workers"
     KAFKA_BATCH_SIZE: int = 100
+    KAFKA_COMPRESSION: str = "snappy"
     KAFKA_NUM_PARTITIONS: int = 3
     KAFKA_REPLICATION_FACTOR: int = 1
     KAFKA_MAX_RETRIES: int = 3
     KAFKA_RETRY_BACKOFF_MS: int = 1000
     KAFKA_SECURITY_PROTOCOL: str = "PLAINTEXT"
     KAFKA_CLIENT_ID: str = "logforge-producer"
+
+    # ULPF Worker Engine Scaling & Performance Tuning
+    ULPF_BATCH_SIZE: int = 100
+    ULPF_WORKER_CONCURRENCY: int = 1
+    PERFORMANCE_METRICS_ENABLED: bool = True
 
     # Authentication, Session & Security Configuration
     JWT_SECRET_KEY: str = "logforge-super-secret-key-for-jwt-sih-2026-ntro-secure"

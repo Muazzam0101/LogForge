@@ -94,6 +94,7 @@ class ProcessingMetadata(BaseModel):
     ingested_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     processing_time_ms: float
     engine_version: str = "0.1.0"
+    stage_timings_ms: Optional[Dict[str, float]] = None
 
 
 class ProcessingResult(BaseModel):

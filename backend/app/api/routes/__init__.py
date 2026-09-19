@@ -1,5 +1,5 @@
 """API routes package."""
-from . import analytics, audit, auth, health, integrity, logs, ml, search, streaming, users
+from . import analytics, audit, auth, health, integrity, logs, ml, search, streaming, system, users
 
 __all__ = [
     "analytics",
@@ -11,6 +11,7 @@ __all__ = [
     "ml",
     "search",
     "streaming",
+    "system",
     "users",
 ]
 

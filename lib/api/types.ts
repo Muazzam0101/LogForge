@@ -439,7 +439,7 @@ export interface BatchLogIngestResponse {
   total_failed: number;
   mode: string;
   event_ids: string[];
-  errors: Array<{ index: number; error: any }>;
+  errors: Array<{ index: number; error: unknown }>;
 }
 
 export interface StreamingTopicInfo {
@@ -553,6 +553,40 @@ export interface AuditQueryParams {
   end_time?: string;
 }
 
+export interface SubsystemStatus {
+  status: "CONNECTED" | "DISCONNECTED" | "DISABLED" | "DEGRADED";
+  latency_ms?: number | null;
+  lag?: number | null;
+}
 
-
-
+export interface SystemPerformanceMetrics {
+  events_received: number;
+  events_processed: number;
+  events_failed: number;
+  events_routed_dlq: number;
+  events_per_second: number;
+  avg_latency_ms: number;
+  p50_latency_ms: number;
+  p95_latency_ms: number;
+  p99_latency_ms: number;
+  min_latency_ms: number;
+  max_latency_ms: number;
+  kafka_lag: number | null;
+  active_workers: number;
+  mysql_latency_ms: number | null;
+  opensearch_latency_ms: number | null;
+  cpu_percent: number | null;
+  memory_percent: number | null;
+  stage_timings_ms?: {
+    format_detection?: number;
+    parsing?: number;
+    normalization?: number;
+    schema_validation?: number;
+    persistence?: number;
+  } | null;
+  subsystems?: {
+    mysql?: SubsystemStatus;
+    opensearch?: SubsystemStatus;
+    kafka?: SubsystemStatus;
+  } | null;
+}

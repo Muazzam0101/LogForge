@@ -81,10 +81,21 @@ class EventModel(Base):
         doc="Database persistence timestamp",
     )
 
-    # Composite index for time-range + severity queries
+    # High-performance composite indexes designed for frequent Logs Explorer queries:
+    # 1. (created_at, id) - Accelerates default newest-first ordering and keyset/offset pagination without table scan
+    # 2. (timestamp, severity) - Accelerates time-range queries with severity filtering
+    # 3. (severity, created_at) - Accelerates dashboard high/critical severity queries ordered by time
+    # 4. (action, created_at) - Accelerates action filters (allow/block) ordered by time
+    # 5. (source_ip, created_at) - Accelerates endpoint investigation queries ordered by time
+    # 6. (destination_ip, created_at) - Accelerates destination host investigation queries ordered by time
     __table_args__ = (
         Index("ix_events_created_at", "created_at"),
+        Index("ix_events_created_at_id", "created_at", "id"),
         Index("ix_events_timestamp_severity", "timestamp", "severity"),
+        Index("ix_events_severity_created_at", "severity", "created_at"),
+        Index("ix_events_action_created_at", "action", "created_at"),
+        Index("ix_events_source_ip_created_at", "source_ip", "created_at"),
+        Index("ix_events_dest_ip_created_at", "destination_ip", "created_at"),
     )
 
     def __repr__(self) -> str:

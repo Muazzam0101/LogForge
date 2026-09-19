@@ -83,29 +83,84 @@ def score_event_safely(
         return None
 
 
+import time
+import numpy as np
+
+
 def batch_score_events_safely(
     events: List[Dict[str, Any]],
     db: Session,
 ) -> int:
     """
-    Safely scores a batch of events and persists them.
-    Non-blocking, never raises.
+    Safely scores a batch of events using vectorized matrix inference and bulk persistence.
+    Non-blocking, never raises uncaught exceptions.
     """
     if not model_instance.is_trained or not events:
         return 0
 
-    success_count = 0
+    valid_events = [evt for evt in events if evt.get("event_id")]
+    if not valid_events:
+        return 0
+
     try:
-        for evt in events:
-            res = score_event_safely(evt, db, auto_commit=False)
-            if res is not None:
-                success_count += 1
-        db.commit()
+        start_time = time.perf_counter()
+
+        # 1. Vectorized feature extraction
+        vectors = []
+        snapshots = []
+        for evt in valid_events:
+            v, snap = extract_features_from_dict(evt)
+            vectors.append(v)
+            snapshots.append(snap)
+
+        X = np.array(vectors, dtype=np.float64)
+
+        # 2. Fast vectorized matrix scoring in a single scikit-learn call
+        score_tuples = model_instance.score_matrix(X)
+
+        # 3. Construct persistence models
+        records: List[EventAnomalyModel] = []
+        now_utc = datetime.now(timezone.utc)
+
+        for idx, (score, classification) in enumerate(score_tuples):
+            evt = valid_events[idx]
+            snap = snapshots[idx]
+
+            explanation = generate_anomaly_explanation(
+                score=score,
+                classification=classification,
+                features=snap,
+                raw_event=evt.get("raw_log"),
+                source_ip=evt.get("source_ip"),
+                destination_ip=evt.get("destination_ip"),
+                action=evt.get("action"),
+                protocol=evt.get("protocol"),
+            )
+
+            record = EventAnomalyModel(
+                event_id=evt["event_id"],
+                anomaly_score=score,
+                classification=classification,
+                explanation=explanation,
+                model_name=model_instance.model_name,
+                model_version=model_instance.model_version,
+                features_snapshot=snap,
+                created_at=now_utc,
+            )
+            records.append(record)
+
+        if records:
+            db.add_all(records)
+            db.commit()
+
+        elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
+        logger.debug("Vectorized AI/ML scored %d events in %.2f ms (%.1f events/sec)", len(records), elapsed_ms, (len(records) / (elapsed_ms / 1000.0) if elapsed_ms > 0 else 0))
+        return len(records)
+
     except Exception as exc:
-        logger.warning("Batch scoring error: %s", str(exc))
+        logger.warning("Vectorized AI batch scoring error: %s", str(exc))
         try:
             db.rollback()
         except Exception:
             pass
-
-    return success_count
+        return 0

@@ -159,6 +159,7 @@ class KafkaAdminService:
                         "status": "ACTIVE",
                     })
 
+            lag = self.get_consumer_lag()
             return {
                 "status": "CONNECTED",
                 "enabled": True,
@@ -167,6 +168,7 @@ class KafkaAdminService:
                 "brokers_count": len(broker_ids),
                 "topics": topic_info,
                 "consumer_group": settings.KAFKA_CONSUMER_GROUP,
+                "consumer_lag": lag,
                 "message": f"Connected to Kafka broker ({len(broker_ids)} active node)",
             }
         except Exception as exc:
@@ -178,8 +180,58 @@ class KafkaAdminService:
                 "brokers_count": 0,
                 "topics": [],
                 "consumer_group": settings.KAFKA_CONSUMER_GROUP,
+                "consumer_lag": None,
                 "message": f"Kafka broker connection probe failed: {str(exc)}",
             }
+
+    def get_consumer_lag(self, topic: Optional[str] = None, group_id: Optional[str] = None) -> Optional[int]:
+        """Calculates real total consumer lag across partitions for the consumer group.
+        
+        Returns None if Kafka is disabled or unreachable.
+        """
+        if not settings.KAFKA_ENABLED or not CONFLUENT_KAFKA_AVAILABLE:
+            return None
+
+        target_topic = topic or settings.KAFKA_LOG_TOPIC
+        target_group = group_id or settings.KAFKA_CONSUMER_GROUP
+
+        try:
+            from confluent_kafka import Consumer, TopicPartition
+            config = {
+                "bootstrap.servers": settings.KAFKA_BOOTSTRAP_SERVERS,
+                "group.id": f"{target_group}-lag-monitor",
+                "enable.auto.commit": False,
+                "socket.timeout.ms": 2000,
+            }
+            if settings.KAFKA_SECURITY_PROTOCOL != "PLAINTEXT":
+                config["security.protocol"] = settings.KAFKA_SECURITY_PROTOCOL
+
+            consumer = Consumer(config)
+            try:
+                metadata = consumer.list_topics(target_topic, timeout=2.0)
+                if not metadata or target_topic not in metadata.topics:
+                    return None
+
+                partitions = [
+                    TopicPartition(target_topic, p_id)
+                    for p_id in metadata.topics[target_topic].partitions.keys()
+                ]
+
+                committed = consumer.committed(partitions, timeout=2.0)
+                total_lag = 0
+
+                for tp in committed:
+                    low, high = consumer.get_watermark_offsets(tp, timeout=2.0)
+                    committed_offset = tp.offset if tp.offset >= 0 else low
+                    lag = max(0, high - committed_offset)
+                    total_lag += lag
+
+                return total_lag
+            finally:
+                consumer.close()
+        except Exception as exc:
+            logger.debug("Could not calculate Kafka lag: %s", exc)
+            return None
 
 
 kafka_admin_service = KafkaAdminService()

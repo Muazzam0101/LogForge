@@ -12,6 +12,10 @@ from ..core.logging import logger
 from .index import DEFAULT_ALIAS_NAME
 
 
+import time
+from ..core.metrics import metrics_collector
+
+
 class OpenSearchRepository:
     """Repository handling raw document ingestion, bulk requests, and search queries."""
 
@@ -27,6 +31,7 @@ class OpenSearchRepository:
         if not self.client:
             return False
 
+        start_time = time.perf_counter()
         try:
             self.client.index(
                 index=self.alias,
@@ -34,8 +39,10 @@ class OpenSearchRepository:
                 body=doc,
                 refresh=False,
             )
+            metrics_collector.record_opensearch_latency((time.perf_counter() - start_time) * 1000)
             return True
         except OpenSearchException as exc:
+            metrics_collector.record_opensearch_latency((time.perf_counter() - start_time) * 1000)
             logger.warning("OpenSearch failed to index document %s: %s", event_id, exc)
             return False
         except Exception as exc:
@@ -46,8 +53,8 @@ class OpenSearchRepository:
         self,
         docs: List[Dict[str, Any]],
         chunk_size: Optional[int] = None,
-    ) -> Tuple[int, List[Any]]:
-        """Indexes a list of documents in batches using OpenSearch Bulk API."""
+    ) -> Tuple[int, List[Dict[str, Any]]]:
+        """Indexes a list of documents in batches using OpenSearch Bulk API with partial failure tracking."""
         if not self.client or not docs:
             return 0, []
 
@@ -64,8 +71,9 @@ class OpenSearchRepository:
             if "event_id" in doc
         ]
 
+        start_time = time.perf_counter()
         try:
-            success_count, errors = helpers.bulk(
+            success_count, raw_errors = helpers.bulk(
                 client=self.client,
                 actions=actions,
                 chunk_size=batch_size,
@@ -74,27 +82,58 @@ class OpenSearchRepository:
                 max_retries=settings.OPENSEARCH_MAX_RETRIES,
                 refresh=False,
             )
-            if errors:
-                logger.warning("OpenSearch bulk indexing completed with %d errors out of %d", len(errors), len(actions))
-            return success_count, errors
+            metrics_collector.record_opensearch_latency((time.perf_counter() - start_time) * 1000)
+
+            parsed_errors: List[Dict[str, Any]] = []
+            if raw_errors:
+                for err in raw_errors:
+                    if isinstance(err, dict):
+                        action_type = next(iter(err.keys()), "index")
+                        err_body = err.get(action_type, {})
+                        failed_id = err_body.get("_id", "unknown")
+                        err_reason = err_body.get("error", {}).get("reason") if isinstance(err_body.get("error"), dict) else str(err_body.get("error"))
+                        parsed_errors.append({
+                            "event_id": failed_id,
+                            "status": err_body.get("status"),
+                            "error": err_reason or "Unknown bulk index error",
+                        })
+                    else:
+                        parsed_errors.append({
+                            "event_id": "unknown",
+                            "status": 500,
+                            "error": str(err),
+                        })
+
+                logger.warning(
+                    "OpenSearch bulk indexing completed with %d failures out of %d. Failed event_ids: %s",
+                    len(parsed_errors),
+                    len(actions),
+                    [e["event_id"] for e in parsed_errors[:5]],
+                )
+            return success_count, parsed_errors
         except OpenSearchException as exc:
+            metrics_collector.record_opensearch_latency((time.perf_counter() - start_time) * 1000)
             logger.warning("OpenSearch bulk indexing encountered exception: %s", exc)
-            return 0, [str(exc)]
+            return 0, [{"event_id": "all", "error": str(exc), "status": 500}]
         except Exception as exc:
             logger.error("Unexpected error during bulk indexing: %s", exc)
-            return 0, [str(exc)]
+            return 0, [{"event_id": "all", "error": str(exc), "status": 500}]
 
     def search(self, query_body: Dict[str, Any]) -> Dict[str, Any]:
         """Executes a search query against the OpenSearch alias."""
         if not self.client:
             return {"hits": {"total": {"value": 0}, "hits": []}}
 
+        start_time = time.perf_counter()
         try:
-            return self.client.search(
+            res = self.client.search(
                 index=self.alias,
                 body=query_body,
             )
+            metrics_collector.record_opensearch_latency((time.perf_counter() - start_time) * 1000)
+            return res
         except OpenSearchException as exc:
+            metrics_collector.record_opensearch_latency((time.perf_counter() - start_time) * 1000)
             logger.warning("OpenSearch search query failed: %s", exc)
             raise
         except Exception as exc:

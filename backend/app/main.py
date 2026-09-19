@@ -8,7 +8,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
 
-from .api.routes import analytics, audit, auth, health, integrity, logs, ml, search, streaming, users
+import time
+from .api.routes import analytics, audit, auth, health, integrity, logs, ml, search, streaming, system, users
 
 
 from .core.config import settings
@@ -120,6 +121,15 @@ async def general_exception_handler(
     )
 
 
+@app.middleware("http")
+async def performance_telemetry_middleware(request: Request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)
+    dur_ms = (time.perf_counter() - start) * 1000.0
+    response.headers["X-Response-Time-Ms"] = f"{dur_ms:.2f}"
+    return response
+
+
 # Include Routers
 app.include_router(health.router)
 app.include_router(auth.router, prefix=settings.API_V1_PREFIX)
@@ -131,6 +141,7 @@ app.include_router(ml.router, prefix=settings.API_V1_PREFIX)
 app.include_router(integrity.router, prefix=settings.API_V1_PREFIX)
 app.include_router(search.router, prefix=settings.API_V1_PREFIX)
 app.include_router(streaming.router, prefix=settings.API_V1_PREFIX)
+app.include_router(system.router, prefix=settings.API_V1_PREFIX)
 
 
 

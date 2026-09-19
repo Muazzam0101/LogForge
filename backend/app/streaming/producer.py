@@ -37,7 +37,7 @@ class KafkaProducerService:
                 "acks": "all",  # Strong durability
                 "retries": 3,
                 "retry.backoff.ms": 250,
-                "compression.type": "snappy",  # High throughput compression
+                "compression.type": settings.KAFKA_COMPRESSION,  # Configurable high-throughput compression
                 "linger.ms": 5,  # 5ms batching window to maximize throughput
                 "batch.num.messages": settings.KAFKA_BATCH_SIZE,
                 "queue.buffering.max.messages": 100000,

@@ -1,10 +1,12 @@
 """Event Repository for Database Persistence and Querying."""
 from datetime import datetime
+import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
+from ...core.metrics import metrics_collector
 from ...models.event import EventModel
 from ...schemas.event import ProcessingResult
 
@@ -58,9 +60,11 @@ class EventRepository:
             sha256_hash=result.raw_event_hash,
         )
 
+        start_time = time.perf_counter()
         db.add(event_model)
         db.commit()
         db.refresh(event_model)
+        metrics_collector.record_mysql_latency((time.perf_counter() - start_time) * 1000)
         return event_model
 
     @staticmethod
@@ -115,18 +119,24 @@ class EventRepository:
             models.append(model)
 
         if models:
+            batch_start = time.perf_counter()
             db.add_all(models)
             db.commit()
-            for m in models:
-                db.refresh(m)
+            # High-performance bulk insert optimization:
+            # Omit db.refresh(m) loop which otherwise executes N separate SELECT queries across the network.
+            # All model attributes are already loaded in memory.
+            metrics_collector.record_mysql_latency((time.perf_counter() - batch_start) * 1000)
 
         return models
 
     @staticmethod
     def get_by_event_id(db: Session, event_id: str) -> Optional[EventModel]:
         """Retrieves a single event by its ULPF event_id UUID."""
+        start_time = time.perf_counter()
         stmt = select(EventModel).where(EventModel.event_id == event_id)
-        return db.scalars(stmt).first()
+        res = db.scalars(stmt).first()
+        metrics_collector.record_mysql_latency((time.perf_counter() - start_time) * 1000)
+        return res
 
     @staticmethod
     def get_events(
@@ -145,6 +155,7 @@ class EventRepository:
         end_time: Optional[datetime] = None,
     ) -> Tuple[List[EventModel], int]:
         """Queries events with pagination, sorting newest-first, and server-side filtering."""
+        query_start = time.perf_counter()
         stmt = select(EventModel)
         count_stmt = select(func.count(EventModel.id))
 
@@ -169,39 +180,39 @@ class EventRepository:
             stmt = stmt.where(EventModel.event_id == event_id.strip())
             count_stmt = count_stmt.where(EventModel.event_id == event_id.strip())
 
-        # Filter: detected_format
+        # Filter: detected_format (index-friendly comparison)
         if detected_format:
             fmt_clean = detected_format.strip().lower()
-            stmt = stmt.where(func.lower(EventModel.detected_format) == fmt_clean)
-            count_stmt = count_stmt.where(func.lower(EventModel.detected_format) == fmt_clean)
+            stmt = stmt.where(or_(EventModel.detected_format == fmt_clean, func.lower(EventModel.detected_format) == fmt_clean))
+            count_stmt = count_stmt.where(or_(EventModel.detected_format == fmt_clean, func.lower(EventModel.detected_format) == fmt_clean))
 
-        # Filter: severity
+        # Filter: severity (index-friendly comparison)
         if severity:
             sev_clean = severity.strip().lower()
-            stmt = stmt.where(func.lower(EventModel.severity) == sev_clean)
-            count_stmt = count_stmt.where(func.lower(EventModel.severity) == sev_clean)
+            stmt = stmt.where(or_(EventModel.severity == sev_clean, func.lower(EventModel.severity) == sev_clean))
+            count_stmt = count_stmt.where(or_(EventModel.severity == sev_clean, func.lower(EventModel.severity) == sev_clean))
 
-        # Filter: action
+        # Filter: action (index-friendly comparison)
         if action:
             act_clean = action.strip().lower()
-            stmt = stmt.where(func.lower(EventModel.action) == act_clean)
-            count_stmt = count_stmt.where(func.lower(EventModel.action) == act_clean)
+            stmt = stmt.where(or_(EventModel.action == act_clean, func.lower(EventModel.action) == act_clean))
+            count_stmt = count_stmt.where(or_(EventModel.action == act_clean, func.lower(EventModel.action) == act_clean))
 
-        # Filter: source_ip
+        # Filter: source_ip (index-friendly comparison)
         if source_ip:
             stmt = stmt.where(EventModel.source_ip == source_ip.strip())
             count_stmt = count_stmt.where(EventModel.source_ip == source_ip.strip())
 
-        # Filter: destination_ip
+        # Filter: destination_ip (index-friendly comparison)
         if destination_ip:
             stmt = stmt.where(EventModel.destination_ip == destination_ip.strip())
             count_stmt = count_stmt.where(EventModel.destination_ip == destination_ip.strip())
 
-        # Filter: protocol
+        # Filter: protocol (index-friendly comparison)
         if protocol:
             proto_clean = protocol.strip().lower()
-            stmt = stmt.where(func.lower(EventModel.protocol) == proto_clean)
-            count_stmt = count_stmt.where(func.lower(EventModel.protocol) == proto_clean)
+            stmt = stmt.where(or_(EventModel.protocol == proto_clean, func.lower(EventModel.protocol) == proto_clean))
+            count_stmt = count_stmt.where(or_(EventModel.protocol == proto_clean, func.lower(EventModel.protocol) == proto_clean))
 
         # Filter: time range
         if start_time:
@@ -215,9 +226,10 @@ class EventRepository:
         # Total count matching filters
         total = db.scalar(count_stmt) or 0
 
-        # Sort newest-first: order by created_at DESC (and timestamp DESC)
+        # Sort newest-first: order by created_at DESC, id DESC (covered by composite index ix_events_created_at_id)
         stmt = stmt.order_by(EventModel.created_at.desc(), EventModel.id.desc())
         stmt = stmt.limit(limit).offset(offset)
 
         events = list(db.scalars(stmt).all())
+        metrics_collector.record_mysql_latency((time.perf_counter() - query_start) * 1000)
         return events, total
