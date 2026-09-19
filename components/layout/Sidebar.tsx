@@ -58,7 +58,7 @@ const navItems: NavItemDef[] = [
   { id: "ingestion", href: "/ingestion", label: "Log Ingestion", icon: Package },
   { id: "anomalies", href: "/anomalies", label: "AI Anomalies", icon: Brain },
   { id: "analytics", href: "/sources", label: "Analytics", icon: BarChart3 },
-  { id: "reports", href: "/reports", label: "Reports", icon: FileBarChart },
+  // { id: "reports", href: "/reports", label: "Reports", icon: FileBarChart },
   { id: "integrity", href: "/alerts", label: "Data Integrity", icon: ShieldCheck },
   { id: "health", href: "/status", label: "System Health", icon: CirclePlus },
   { id: "settings", href: "/settings", label: "Settings", icon: Settings },
@@ -83,7 +83,7 @@ function NavList({ onClose }: { onClose: () => void }) {
 
     if (pathname.startsWith("/ingestion")) return "ingestion";
     if (pathname.startsWith("/sources") || pathname.startsWith("/threats")) return "analytics";
-    if (pathname.startsWith("/reports")) return "reports";
+    // if (pathname.startsWith("/reports")) return "reports";
     if (pathname.startsWith("/alerts")) return "integrity";
     if (pathname.startsWith("/status")) return "health";
     if (pathname.startsWith("/settings")) return "settings";
