@@ -73,14 +73,14 @@ class OpenSearchClientManager:
         if now - self._last_check < self._check_interval:
             return self._cached_available
 
-        # Ultra-fast non-blocking TCP socket probe (50ms) to check if host:port is listening
+        # Non-blocking TCP socket probe (up to 3.0s) to support both local and cloud deployments
         try:
             import socket
             from urllib.parse import urlparse
             parsed = urlparse(settings.OPENSEARCH_URL)
             host = parsed.hostname or "localhost"
             port = parsed.port or (443 if parsed.scheme == "https" else 9200)
-            with socket.create_connection((host, port), timeout=0.05):
+            with socket.create_connection((host, port), timeout=3.0):
                 pass
         except Exception:
             self._cached_available = False
@@ -94,7 +94,7 @@ class OpenSearchClientManager:
             return False
 
         try:
-            self._cached_available = bool(client.ping(request_timeout=0.5))
+            self._cached_available = bool(client.ping(request_timeout=3.0))
         except (ConnectionError, TransportError, OpenSearchException, Exception) as exc:
             logger.debug("OpenSearch ping failed: %s", exc)
             self._cached_available = False
