@@ -294,10 +294,82 @@
   background-color: rgba(10, 11, 15, 0.85);
 }
 
-/* Text Selection */
+/* Text Selection - Global Theme Orange Accent */
+::selection {
+  background-color: rgba(249, 115, 22, 0.3);
+  color: inherit;
+}
+
 .dark ::selection {
-  background-color: rgba(139, 92, 246, 0.3);
+  background-color: rgba(249, 115, 22, 0.4);
   color: #F5F5F7;
+}
+
+/* Input & Textarea Selection Styling */
+input::selection,
+textarea::selection {
+  background-color: #ea580c !important;
+  color: #ffffff !important;
+}
+
+.dark input::selection,
+.dark textarea::selection {
+  background-color: #ea580c !important;
+  color: #ffffff !important;
+}
+
+/* Chrome / Safari / Edge Autofill Override to LogForge Theme */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px rgba(249, 115, 22, 0.08) inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #ea580c !important;
+  border-color: #ea580c !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover, 
+.dark input:-webkit-autofill:focus, 
+.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #1A1D24 inset !important;
+  -webkit-text-fill-color: #F5F5F7 !important;
+  caret-color: #f97316 !important;
+  border-color: #f97316 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Dedicated Login Field Orange Focus, Selection & Autofill */
+.login-input-orange {
+  caret-color: #ea580c !important;
+}
+
+.login-input-orange::selection {
+  background-color: #ea580c !important;
+  color: #ffffff !important;
+}
+
+.login-input-orange:focus {
+  border-color: #ea580c !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.25) !important;
+}
+
+.dark .login-input-orange {
+  caret-color: #f97316 !important;
+}
+
+.dark .login-input-orange::selection {
+  background-color: #ea580c !important;
+  color: #ffffff !important;
+}
+
+.dark .login-input-orange:focus {
+  border-color: #f97316 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.25) !important;
 }
 
 /* Custom scrollbars */

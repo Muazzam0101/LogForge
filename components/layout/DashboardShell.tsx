@@ -16,7 +16,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const {
     isUploadModalOpen,
     closeUploadModal,
@@ -25,6 +25,29 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     isAddSourceModalOpen,
     closeAddSourceModal,
   } = useModals();
+
+  // Responsive sidebar: Open by default on desktop (>=1024px), closed on mobile (<1024px)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsSidebarOpen(window.innerWidth >= 1024);
+    }
+
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Automatically close sidebar on mobile navigation
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setIsSidebarOpen(false);
+    }
+  }, [pathname]);
 
   // Safety timeout: Never stay stuck on splash screen for more than 1.5 seconds
   const [splashTimeout, setSplashTimeout] = useState(false);

@@ -89,7 +89,7 @@ def main():
                 sys.exit(1)
         else:
             # Non-interactive fallback default for automated container setup
-            password = "LogForgeAdmin2026!Secure"
+            password = "LogForgeAdmin2026!"
             print(f"[*] Non-interactive environment detected. Using secure initial bootstrap password.")
 
     success = create_or_update_admin(
